@@ -1,0 +1,57 @@
+{
+  "lang": {
+    "en": "EN",
+    "de": "DE",
+    "fr": "FR",
+    "it": "IT"
+  },
+  "search": {
+    "placeholder": "Rechercher une gare...",
+    "searching": "Recherche...",
+    "stationsNearYou": "Gares à proximité :",
+    "failed": "Échec du chargement."
+  },
+  "stationboard": {
+    "titleDepartures": "Départs",
+    "titleArrivals": "Arrivées",
+    "refreshingDepartures": "Actualisation des départs...",
+    "refreshingArrivals": "Actualisation des arrivées...",
+    "releaseToRefresh": "Relâcher pour actualiser",
+    "pullToRefresh": "Tirer pour actualiser",
+    "showDepartures": "Afficher les départs",
+    "showArrivals": "Afficher les arrivées",
+    "selectStation": "Sélectionnez une gare via l'icône de recherche.",
+    "loading": "Chargement...",
+    "noDepartures": "Aucun départ disponible.",
+    "noArrivals": "Aucune arrivée disponible.",
+    "line": "Ligne",
+    "destination": "Destination",
+    "dep": "Dép",
+    "arr": "Arr",
+    "platform": "Voie"
+  },
+  "detail": {
+    "title": "Détail",
+    "notFound": "Départ introuvable.",
+    "arrivalNotFound": "Arrivée introuvable.",
+    "departureEyebrow": "Départ",
+    "arrivalEyebrow": "Arrivée",
+    "to": "vers",
+    "departs": "Départ",
+    "arrives": "Arrivée",
+    "platform": "Voie",
+    "status": "Statut",
+    "min": "min",
+    "onTime": "À l'heure",
+    "operator": "Opérateur",
+    "unknown": "Inconnu",
+    "route": "Itinéraire",
+    "plShort": "V"
+  },
+  "updateDialog": {
+    "title": "Mise à jour disponible",
+    "description": "Une nouvelle version de l'application Transit CH est prête. Rechargez pour appliquer.",
+    "updating": "Mise � jour...",
+    "reload": "Recharger"
+  }
+}

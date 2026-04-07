@@ -1,0 +1,57 @@
+{
+  "lang": {
+    "en": "EN",
+    "de": "DE",
+    "fr": "FR",
+    "it": "IT"
+  },
+  "search": {
+    "placeholder": "Search station...",
+    "searching": "Searching...",
+    "stationsNearYou": "Stations near you:",
+    "failed": "Failed to load."
+  },
+  "stationboard": {
+    "titleDepartures": "Departures",
+    "titleArrivals": "Arrivals",
+    "refreshingDepartures": "Refreshing departures...",
+    "refreshingArrivals": "Refreshing arrivals...",
+    "releaseToRefresh": "Release to refresh",
+    "pullToRefresh": "Pull to refresh",
+    "showDepartures": "Show departures",
+    "showArrivals": "Show arrivals",
+    "selectStation": "Select a station by tapping the search icon.",
+    "loading": "Loading...",
+    "noDepartures": "No departures available.",
+    "noArrivals": "No arrivals available.",
+    "line": "Line",
+    "destination": "Destination",
+    "dep": "Dep",
+    "arr": "Arr",
+    "platform": "Pl."
+  },
+  "detail": {
+    "title": "Detail",
+    "notFound": "Departure not found.",
+    "arrivalNotFound": "Arrival not found.",
+    "departureEyebrow": "Departure",
+    "arrivalEyebrow": "Arrival",
+    "to": "to",
+    "departs": "Departs",
+    "arrives": "Arrives",
+    "platform": "Platform",
+    "status": "Status",
+    "min": "min",
+    "onTime": "On time",
+    "operator": "Operator",
+    "unknown": "Unknown",
+    "route": "Route",
+    "plShort": "Pl"
+  },
+  "updateDialog": {
+    "title": "Update available",
+    "description": "A new version of Transit CH app is ready. Reload the app to apply the update.",
+    "updating": "Updating...",
+    "reload": "Reload now"
+  }
+}

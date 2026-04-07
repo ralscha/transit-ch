@@ -1,0 +1,57 @@
+{
+  "lang": {
+    "en": "EN",
+    "de": "DE",
+    "fr": "FR",
+    "it": "IT"
+  },
+  "search": {
+    "placeholder": "Cerca stazione...",
+    "searching": "Ricerca...",
+    "stationsNearYou": "Stazioni vicine:",
+    "failed": "Errore di caricamento."
+  },
+  "stationboard": {
+    "titleDepartures": "Partenze",
+    "titleArrivals": "Arrivi",
+    "refreshingDepartures": "Aggiornamento partenze...",
+    "refreshingArrivals": "Aggiornamento arrivi...",
+    "releaseToRefresh": "Rilascia per aggiornare",
+    "pullToRefresh": "Trascina per aggiornare",
+    "showDepartures": "Mostra partenze",
+    "showArrivals": "Mostra arrivi",
+    "selectStation": "Seleziona una stazione dall'icona di ricerca.",
+    "loading": "Caricamento...",
+    "noDepartures": "Nessuna partenza disponibile.",
+    "noArrivals": "Nessun arrivo disponibile.",
+    "line": "Linea",
+    "destination": "Destinazione",
+    "dep": "Part",
+    "arr": "Arr",
+    "platform": "Bin"
+  },
+  "detail": {
+    "title": "Dettaglio",
+    "notFound": "Partenza non trovata.",
+    "arrivalNotFound": "Arrivo non trovato.",
+    "departureEyebrow": "Partenza",
+    "arrivalEyebrow": "Arrivo",
+    "to": "per",
+    "departs": "Partenza",
+    "arrives": "Arrivo",
+    "platform": "Binario",
+    "status": "Stato",
+    "min": "min",
+    "onTime": "In orario",
+    "operator": "Operatore",
+    "unknown": "Sconosciuto",
+    "route": "Percorso",
+    "plShort": "Bin"
+  },
+  "updateDialog": {
+    "title": "Aggiornamento disponibile",
+    "description": "È pronta una nuova versione dell'app Transit CH. Ricarica per applicare.",
+    "updating": "Aggiornamento...",
+    "reload": "Ricarica ora"
+  }
+}

@@ -1,0 +1,26 @@
+:root {
+  color-scheme: light;
+  font-family: 'Bahnschrift', 'Segoe UI', Arial, sans-serif;
+  line-height: 1.4;
+  font-weight: 500;
+  background: white;
+  color: black;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+button,
+input {
+  font: inherit;
+  border-radius: 0;
+}
