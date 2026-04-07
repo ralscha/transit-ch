@@ -208,7 +208,8 @@
   display: grid;
   grid-template-columns: 82px 1fr 46px 40px;
   gap: 4px;
-  padding: 6px 8px;
+  min-height: 44px;
+  padding: 8px 8px;
   border-bottom: 1px solid #ccc;
   text-decoration: none;
   color: inherit;

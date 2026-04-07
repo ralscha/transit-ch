@@ -209,7 +209,7 @@ export class TransportApiService {
       map((response) =>
         (response.stations ?? [])
           .filter((station) => Boolean(station.name))
-          .slice(0, 5)
+          .slice(0, 10)
           .map((station) => ({
             id: station.id ?? null,
             name: station.name,
