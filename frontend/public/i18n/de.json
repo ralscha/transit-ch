@@ -1,0 +1,57 @@
+{
+  "lang": {
+    "en": "EN",
+    "de": "DE",
+    "fr": "FR",
+    "it": "IT"
+  },
+  "search": {
+    "placeholder": "Bahnhof suchen...",
+    "searching": "Wird gesucht...",
+    "stationsNearYou": "Bahnhöfe in Ihrer Nähe:",
+    "failed": "Fehler beim Laden."
+  },
+  "stationboard": {
+    "titleDepartures": "Abfahrten",
+    "titleArrivals": "Ankünfte",
+    "refreshingDepartures": "Abfahrten werden aktualisiert...",
+    "refreshingArrivals": "Ankünfte werden aktualisiert...",
+    "releaseToRefresh": "Loslassen zum Aktualisieren",
+    "pullToRefresh": "Ziehen zum Aktualisieren",
+    "showDepartures": "Abfahrten anzeigen",
+    "showArrivals": "Ankünfte anzeigen",
+    "selectStation": "Wählen Sie einen Bahnhof über das Suchsymbol.",
+    "loading": "Wird geladen...",
+    "noDepartures": "Keine Abfahrten verfügbar.",
+    "noArrivals": "Keine Ankünfte verfügbar.",
+    "line": "Linie",
+    "destination": "Ziel",
+    "dep": "Abf",
+    "arr": "Ank",
+    "platform": "Gleis"
+  },
+  "detail": {
+    "title": "Detail",
+    "notFound": "Abfahrt nicht gefunden.",
+    "arrivalNotFound": "Ankunft nicht gefunden.",
+    "departureEyebrow": "Abfahrt",
+    "arrivalEyebrow": "Ankunft",
+    "to": "nach",
+    "departs": "Abfahrt",
+    "arrives": "Ankunft",
+    "platform": "Gleis",
+    "status": "Status",
+    "min": "Min",
+    "onTime": "Pünktlich",
+    "operator": "Betreiber",
+    "unknown": "Unbekannt",
+    "route": "Route",
+    "plShort": "Gl"
+  },
+  "updateDialog": {
+    "title": "Update verfügbar",
+    "description": "Eine neue Version der Transit CH App ist bereit. Neuladen, um das Update anzuwenden.",
+    "updating": "Wird aktualisiert...",
+    "reload": "Jetzt neuladen"
+  }
+}

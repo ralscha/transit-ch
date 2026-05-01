@@ -1,0 +1,73 @@
+<header class="top-bar">
+  <div class="left-action">
+    <button class="btn-back" (click)="goBack()">&#8592;</button>
+  </div>
+  <div class="title">{{ 'detail.title' | transloco }}</div>
+  <div class="right-action"></div>
+</header>
+<div class="content">
+  @if (!entry) {
+    <div class="msg error">
+      {{
+        (state.boardMode() === 'arrival' ? 'detail.arrivalNotFound' : 'detail.notFound') | transloco
+      }}
+    </div>
+  } @else {
+    <div class="card">
+      <div class="eyebrow">
+        {{
+          (state.boardMode() === 'arrival' ? 'detail.arrivalEyebrow' : 'detail.departureEyebrow')
+            | transloco
+        }}
+      </div>
+      <h2 class="line-heading">
+        <span class="line-heading__label">
+          <app-transport-mode-icon [mode]="entry.transportMode" />
+          <span>{{ entry.lineLabel }}</span>
+        </span>
+        <span>{{ 'detail.to' | transloco }} {{ entry.to }}</span>
+      </h2>
+      <div class="meta">
+        <div>
+          <strong
+            >{{
+              (state.boardMode() === 'arrival' ? 'detail.arrives' : 'detail.departs') | transloco
+            }}:</strong
+          >
+          {{ entry.departureLabel }} ({{ 'detail.platform' | transloco }} {{ entry.platformLabel }})
+        </div>
+        <div>
+          <strong>{{ 'detail.status' | transloco }}:</strong>
+          @if (entry.delayMinutes > 0) {
+            <span class="delay">+{{ entry.delayMinutes }} {{ 'detail.min' | transloco }}</span>
+          } @else {
+            {{ 'detail.onTime' | transloco }}
+          }
+        </div>
+        <div>
+          <strong>{{ 'detail.operator' | transloco }}:</strong>
+          {{ entry.operator || ('detail.unknown' | transloco) }}
+        </div>
+      </div>
+    </div>
+
+    @if (entry.routeStops.length > 0) {
+      <div class="stops">
+        <h3>{{ 'detail.route' | transloco }}</h3>
+        @for (stop of entry.routeStops; track stop.stationName + stop.plannedTimeLabel) {
+          <div class="stop">
+            <div class="stop-info">
+              <strong>{{ stop.stationName }}</strong>
+            </div>
+            <div class="stop-time">
+              <span>{{ stop.plannedTimeLabel }}</span>
+              @if (stop.platformLabel) {
+                <small>{{ 'detail.plShort' | transloco }} {{ stop.platformLabel }}</small>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

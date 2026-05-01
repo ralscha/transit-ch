@@ -1,0 +1,48 @@
+version: '3'
+
+tasks:
+  default:
+    desc: List all available tasks
+    cmds:
+      - task --list
+
+  format:
+    desc: Format all code
+    deps:
+      - format-backend
+      - format-importer
+      - format-frontend
+
+  format-backend:
+    desc: Format backend Go code
+    dir: backend
+    cmds:
+      - go fix ./...
+      - go fmt ./...
+
+  format-importer:
+    desc: Format importer Go code
+    dir: importer
+    cmds:
+      - go fix ./...
+      - go fmt ./...
+
+  format-frontend:
+    desc: Format frontend TypeScript code
+    dir: frontend
+    cmds:
+      - ng lint --fix
+      - bun run format            
+
+  lint:
+    desc: Run linters for all code
+    cmds:
+      - task lint-frontend
+      - docker run --rm -v {{toSlash .ROOT_DIR}}/importer:/app -w /app golangci/golangci-lint:v2.11.4 golangci-lint run -v --timeout 5m
+      - docker run --rm -v {{toSlash .ROOT_DIR}}/backend:/app -w /app golangci/golangci-lint:v2.11.4 golangci-lint run -v --timeout 5m     
+
+  lint-frontend:
+    desc: Run linters for frontend TypeScript code
+    dir: frontend
+    cmds:
+      - ng lint

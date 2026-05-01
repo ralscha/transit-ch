@@ -1,0 +1,36 @@
+<router-outlet></router-outlet>
+
+@if (appUpdate.updateAvailable()) {
+  <div
+    class="update-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="update-title"
+    aria-describedby="update-desc"
+  >
+    <div class="update-dialog">
+      <div class="update-header">
+        <h2 id="update-title">{{ 'updateDialog.title' | transloco }}</h2>
+      </div>
+      <div class="update-body">
+        <p id="update-desc">
+          {{ 'updateDialog.description' | transloco }}
+        </p>
+      </div>
+      <div class="update-actions">
+        <button
+          type="button"
+          class="sbb-primary-button"
+          (click)="appUpdate.activateUpdate()"
+          [disabled]="appUpdate.isActivating()"
+        >
+          {{
+            appUpdate.isActivating()
+              ? ('updateDialog.updating' | transloco)
+              : ('updateDialog.reload' | transloco)
+          }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
