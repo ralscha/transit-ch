@@ -24,6 +24,11 @@ transit-ch.rasc.ch {
     }
     header @staticAssets Cache-Control "public, max-age=31536000, immutable"
 
+    @backend {
+        path /traffic-point-v2 /traffic-point-v2/*
+    }
+    reverse_proxy @backend localhost:34341
+
     file_server {
         precompressed br gzip zstd
     }
