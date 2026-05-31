@@ -38,8 +38,8 @@ tasks:
     desc: Run linters for all code
     cmds:
       - task lint-frontend
-      - docker run --rm -v {{toSlash .ROOT_DIR}}/importer:/app -w /app golangci/golangci-lint:v2.11.4 golangci-lint run -v --timeout 5m
-      - docker run --rm -v {{toSlash .ROOT_DIR}}/backend:/app -w /app golangci/golangci-lint:v2.11.4 golangci-lint run -v --timeout 5m     
+      - docker run --rm -v {{toSlash .ROOT_DIR}}/importer:/app -w /app golangci/golangci-lint:v2.12.2 golangci-lint run -v --timeout 5m
+      - docker run --rm -v {{toSlash .ROOT_DIR}}/backend:/app -w /app golangci/golangci-lint:v2.12.2 golangci-lint run -v --timeout 5m     
 
   lint-frontend:
     desc: Run linters for frontend TypeScript code
