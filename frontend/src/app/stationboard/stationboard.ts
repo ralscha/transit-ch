@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  DestroyRef,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -19,7 +12,6 @@ import { TransportModeIconComponent } from '../transport-api.service';
   imports: [RouterLink, TranslocoPipe, TransportModeIconComponent],
   templateUrl: './stationboard.html',
   styleUrls: ['./stationboard.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StationboardComponent {
   readonly #refreshThreshold = 72;

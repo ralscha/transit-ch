@@ -19,10 +19,11 @@ import (
 )
 
 const (
-	csvURL      = "https://data.opentransportdata.swiss/dataset/b06d90be-91c6-440e-ab97-09f579d2fad0/resource/71ea6819-e128-4fda-8ea7-332283309351/download/full-world-traffic-point.csv"
-	csvFileName = "71ea6819-e128-4fda-8ea7-332283309351.csv"
-	dbDirName   = "traffic-points"
-	batchSize   = 1000
+	csvURL          = "https://data.opentransportdata.swiss/dataset/b06d90be-91c6-440e-ab97-09f579d2fad0/resource/71ea6819-e128-4fda-8ea7-332283309351/download/full-world-traffic-point.csv"
+	csvFileName     = "71ea6819-e128-4fda-8ea7-332283309351.csv"
+	dbDirName       = "traffic-points"
+	batchSize       = 1000
+	downloadTimeout = 10 * time.Minute
 )
 
 var logger = log.New(os.Stdout, "", log.LstdFlags)
@@ -68,7 +69,8 @@ func ensureCSV(csvPath string) error {
 		return fmt.Errorf("stat csv: %w", err)
 	}
 
-	response, err := http.Get(csvURL)
+	client := http.Client{Timeout: downloadTimeout}
+	response, err := client.Get(csvURL)
 	if err != nil {
 		return fmt.Errorf("download csv: %w", err)
 	}

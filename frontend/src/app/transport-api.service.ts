@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, Injectable, inject, input } from '@angular/core';
+import { Component, Service, inject, input } from '@angular/core';
 import { interval, map, Observable, of, startWith } from 'rxjs';
 
 interface LocationsResponse {
@@ -164,13 +164,12 @@ export interface RouteStop {
       stroke-width: 1.7;
     }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TransportModeIconComponent {
   readonly mode = input.required<TransportMode>();
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TransportApiService {
   readonly #http = inject(HttpClient);
   readonly #baseUrl = 'https://transport.opendata.ch/v1';

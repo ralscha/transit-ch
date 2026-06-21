@@ -1,11 +1,11 @@
 import { DOCUMENT } from '@angular/common';
-import { Injectable, inject, signal } from '@angular/core';
+import { Service, inject, signal } from '@angular/core';
 import { SwUpdate, type VersionEvent } from '@angular/service-worker';
 
 const UPDATE_CHECK_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12 hours
 const LAST_UPDATE_CHECK_KEY = 'sbb_stationboard_last_update_check_time';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AppUpdateService {
   readonly #document = inject(DOCUMENT);
   readonly #swUpdate = inject(SwUpdate);

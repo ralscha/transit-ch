@@ -6,13 +6,7 @@
   <div class="right-action"></div>
 </header>
 <div class="content">
-  @if (!entry) {
-    <div class="msg error">
-      {{
-        (state.boardMode() === 'arrival' ? 'detail.arrivalNotFound' : 'detail.notFound') | transloco
-      }}
-    </div>
-  } @else {
+  @if (entry(); as selectedEntry) {
     <div class="card">
       <div class="eyebrow">
         {{
@@ -22,10 +16,10 @@
       </div>
       <h2 class="line-heading">
         <span class="line-heading__label">
-          <app-transport-mode-icon [mode]="entry.transportMode" />
-          <span>{{ entry.lineLabel }}</span>
+          <app-transport-mode-icon [mode]="selectedEntry.transportMode" />
+          <span>{{ selectedEntry.lineLabel }}</span>
         </span>
-        <span>{{ 'detail.to' | transloco }} {{ entry.to }}</span>
+        <span>{{ 'detail.to' | transloco }} {{ selectedEntry.to }}</span>
       </h2>
       <div class="meta">
         <div>
@@ -34,27 +28,30 @@
               (state.boardMode() === 'arrival' ? 'detail.arrives' : 'detail.departs') | transloco
             }}:</strong
           >
-          {{ entry.departureLabel }} ({{ 'detail.platform' | transloco }} {{ entry.platformLabel }})
+          {{ selectedEntry.departureLabel }} ({{ 'detail.platform' | transloco }}
+          {{ selectedEntry.platformLabel }})
         </div>
         <div>
           <strong>{{ 'detail.status' | transloco }}:</strong>
-          @if (entry.delayMinutes > 0) {
-            <span class="delay">+{{ entry.delayMinutes }} {{ 'detail.min' | transloco }}</span>
+          @if (selectedEntry.delayMinutes > 0) {
+            <span class="delay"
+              >+{{ selectedEntry.delayMinutes }} {{ 'detail.min' | transloco }}</span
+            >
           } @else {
             {{ 'detail.onTime' | transloco }}
           }
         </div>
         <div>
           <strong>{{ 'detail.operator' | transloco }}:</strong>
-          {{ entry.operator || ('detail.unknown' | transloco) }}
+          {{ selectedEntry.operator || ('detail.unknown' | transloco) }}
         </div>
       </div>
     </div>
 
-    @if (entry.routeStops.length > 0) {
+    @if (selectedEntry.routeStops.length > 0) {
       <div class="stops">
         <h3>{{ 'detail.route' | transloco }}</h3>
-        @for (stop of entry.routeStops; track stop.stationName + stop.plannedTimeLabel) {
+        @for (stop of selectedEntry.routeStops; track stop.stationName + stop.plannedTimeLabel) {
           <div class="stop">
             <div class="stop-info">
               <strong>{{ stop.stationName }}</strong>
@@ -69,5 +66,11 @@
         }
       </div>
     }
+  } @else {
+    <div class="msg error">
+      {{
+        (state.boardMode() === 'arrival' ? 'detail.arrivalNotFound' : 'detail.notFound') | transloco
+      }}
+    </div>
   }
 </div>

@@ -31,18 +31,42 @@ tasks:
     desc: Format frontend TypeScript code
     dir: frontend
     cmds:
-      - ng lint --fix
-      - bun run format            
+      - npm run lint -- --fix
+      - npm run format
 
   lint:
     desc: Run linters for all code
     cmds:
       - task lint-frontend
       - docker run --rm -v {{toSlash .ROOT_DIR}}/importer:/app -w /app golangci/golangci-lint:v2.12.2 golangci-lint run -v --timeout 5m
-      - docker run --rm -v {{toSlash .ROOT_DIR}}/backend:/app -w /app golangci/golangci-lint:v2.12.2 golangci-lint run -v --timeout 5m     
+      - docker run --rm -v {{toSlash .ROOT_DIR}}/backend:/app -w /app golangci/golangci-lint:v2.12.2 golangci-lint run -v --timeout 5m
 
   lint-frontend:
     desc: Run linters for frontend TypeScript code
     dir: frontend
     cmds:
-      - ng lint
+      - npm run lint
+
+  test:
+    desc: Run backend and importer tests
+    deps:
+      - test-backend
+      - test-importer
+
+  test-backend:
+    desc: Run backend Go tests
+    dir: backend
+    cmds:
+      - go test ./...
+
+  test-importer:
+    desc: Run importer Go tests
+    dir: importer
+    cmds:
+      - go test ./...
+
+  build-frontend:
+    desc: Build the Angular frontend
+    dir: frontend
+    cmds:
+      - npm run build

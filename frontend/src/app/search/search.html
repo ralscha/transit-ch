@@ -4,7 +4,7 @@
     <div class="search-bar">
       <input
         type="text"
-        [formControl]="searchCtrl"
+        [formField]="searchForm.query"
         [placeholder]="'search.placeholder' | transloco"
       />
     </div>
@@ -17,7 +17,7 @@
       <div class="msg error">{{ 'search.failed' | transloco }}</div>
     }
     <div class="results">
-      @if (results().length > 0 && !searchCtrl.value && !geolocationLoading()) {
+      @if (results().length > 0 && !searchModel().query && !geolocationLoading()) {
         <div class="msg" style="font-size: 0.8rem; text-transform: uppercase">
           {{ 'search.stationsNearYou' | transloco }}
         </div>

@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Service, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   BoardType,
@@ -7,7 +7,7 @@ import {
   TransportApiService,
 } from './transport-api.service';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class StateService {
   readonly #transportApi = inject(TransportApiService);
   readonly #router = inject(Router);
