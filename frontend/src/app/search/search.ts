@@ -1,5 +1,5 @@
 import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
-import { form, FormField } from '@angular/forms/signals';
+import { form, FormField, FormRoot } from '@angular/forms/signals';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, type Subscription } from 'rxjs';
@@ -14,7 +14,7 @@ interface SearchFormModel {
 @Component({
   selector: 'app-search',
   standalone: true,
-  imports: [FormField, TranslocoPipe],
+  imports: [FormField, FormRoot, TranslocoPipe],
   templateUrl: './search.html',
   styleUrls: ['./search.css'],
 })

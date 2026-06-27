@@ -112,6 +112,14 @@ export class StationboardComponent {
     this.state.toggleBoardMode();
   }
 
+  setActiveLanguage(event: Event) {
+    const select = event.target;
+
+    if (select instanceof HTMLSelectElement) {
+      this.translocoService.setActiveLang(select.value);
+    }
+  }
+
   #canStartPull(event: TouchEvent): boolean {
     const currentTarget = event.currentTarget;
 

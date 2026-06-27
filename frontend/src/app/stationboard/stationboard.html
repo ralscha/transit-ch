@@ -23,7 +23,7 @@
   <div class="top-bar-spacer"></div>
   <select
     class="language-select"
-    (change)="translocoService.setActiveLang($any($event.target).value)"
+    (change)="setActiveLanguage($event)"
     [value]="translocoService.getActiveLang()"
   >
     <option value="en">{{ 'lang.en' | transloco }}</option>

@@ -1,13 +1,13 @@
 <div class="search-page">
   <header class="top-bar">
     <button class="btn-back" (click)="goBack()">&#8592;</button>
-    <div class="search-bar">
+    <form class="search-bar" [formRoot]="searchForm" (submit)="$event.preventDefault()" novalidate>
       <input
         type="text"
         [formField]="searchForm.query"
         [placeholder]="'search.placeholder' | transloco"
       />
-    </div>
+    </form>
   </header>
   <div class="content">
     @if (isLoading() || geolocationLoading()) {
