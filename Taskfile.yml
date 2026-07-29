@@ -13,6 +13,24 @@ tasks:
       - format-importer
       - format-frontend
 
+  build:
+    desc: Build the backend and importer programs
+    deps:
+      - build-backend
+      - build-importer
+
+  build-backend:
+    desc: Build the backend Go program
+    dir: backend
+    cmds:
+      - go build -o ../transit-ch-backend{{exeExt}} .
+
+  build-importer:
+    desc: Build the importer Go program
+    dir: importer
+    cmds:
+      - go build -o ../transit-ch-importer{{exeExt}} .
+
   format-backend:
     desc: Format backend Go code
     dir: backend
