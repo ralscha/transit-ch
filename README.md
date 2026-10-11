@@ -33,6 +33,8 @@ npm run format
 
 The production build writes to `frontend/dist/transit-ch/browser` and the `postbuild` step precompresses assets with gzip, Brotli, and zstd for Caddy.
 
+Translations are maintained in `frontend/public/i18n` and bundled into the app's versioned JavaScript. All four languages are available offline and stay in sync with the screens in that build.
+
 ### Timetable line badges
 
 The stationboard and journey details use official SBB badges for IC, IR, S, SN, RE and R lines 1-99, plus category-only badges when the API supplies no number. The SVGs are bundled in `frontend/public/icons/sbb-lines`, preserve the original artwork, and use the complete line label as alternative text. Unknown services, unmatched numbers (including train identifiers), and failed image loads keep a text label and transport-mode icon. The service worker caches badges on demand and updates previously cached badges with the app.
@@ -95,7 +97,7 @@ The importer discovers the current CSV URL from the stable catalogue page becaus
 go run ./importer -input /path/to/actual-date-world-traffic-point.csv -out backend/platforms.bin
 ```
 
-The complete replacement is validated, written to a temporary file beside the target, flushed, and renamed over the target. Failed imports preserve the previous snapshot. Refresh daily after 01:00 Europe/Zurich, then restart the backend to load the new snapshot. No refresh schedule is installed automatically. Existing Pebble directories are unused and need not be migrated; rebuild from the export.
+The complete replacement is validated, written to a temporary file beside the target, flushed, and renamed over the target. Failed imports preserve the previous snapshot. Refresh daily after 01:00 Europe/Zurich, then restart the backend to load the new snapshot. No refresh schedule is installed automatically.
 
 ### Storage format and performance
 
@@ -103,7 +105,7 @@ The complete replacement is validated, written to a temporary file beside the ta
 
 The 64-byte little-endian header contains magic `CHPLAT01`, format version, slot and record counts, record-section length, the import day, reserved bytes, and a SHA-256 digest over the header's first 32 bytes and the remaining file after the header. Each 16-byte slot contains a 64-bit FNV-1a hash, record offset and length. Each record starts with a 32-bit station ID, 16-bit key length, two reserved bytes and 32-bit JSON length, followed by the normalized UTF-8 key and JSON. Startup checks dimensions, bounds, keys, payloads, index reachability, duplicates and the checksum. Returned slices are read-only by contract. No WAL, compaction, background workers, mmap or external Go dependencies are needed.
 
-The 2026-10-11 export produced 54,723 keys in 7,806,773 bytes (about 7.45 MiB). On the development Windows machine, lookups measured approximately 67 ns for a repeated hit, 430 ns for mixed hits across the snapshot, and 34 ns for misses, all with 0 B/op and 0 allocations/op. These are storage microbenchmarks, not HTTP latency or a comparison with Pebble. Pre-encoding responses trades some file size for request speed. Reproduce with:
+The 2026-10-11 export produced 54,723 keys in 7,806,773 bytes (about 7.45 MiB). On the development Windows machine, lookups measured approximately 67 ns for a repeated hit, 430 ns for mixed hits across the snapshot, and 34 ns for misses, all with 0 B/op and 0 allocations/op. These are storage microbenchmarks, not HTTP latency. Pre-encoding responses trades some file size for request speed. Reproduce with:
 
 ```bash
 task benchmark-storage
@@ -126,7 +128,7 @@ task build-frontend
 
 ## Deployment
 
-For a complete clone, build and installation walkthrough, including systemd setup, Caddy, logs and later updates, see [Install on Debian or Ubuntu](deploy/README.md).
+For a complete clone, build and installation walkthrough, including systemd setup, Caddy and logs, see [Install on Debian or Ubuntu](deploy/README.md). To deploy a new version to an installed server, follow [Updating to a new version](#updating-to-a-new-version).
 
 `Caddyfile` serves the Angular build from `/opt/transit-ch/dist/transit-ch/browser`, enables precompressed assets, applies security headers, routes SPA fallback requests to `index.html`, and reverse-proxies `/traffic-point-v2/*` to the Go backend on port `34341`.
 
@@ -149,7 +151,7 @@ go build -o transit-ch-backend ./backend
 go build -o transit-ch-importer ./importer
 ```
 
-For the first installation, run the following on the Linux server from the directory containing the built executables and `deploy/systemd`. Create the account once; skip `useradd` if it already exists.
+For a new installation, run the following on the Linux server from the directory containing the built executables and `deploy/systemd`:
 
 ```bash
 sudo useradd --system --user-group --no-create-home --home-dir /opt/transit-ch --shell /usr/sbin/nologin transit-ch
@@ -161,7 +163,7 @@ sudo systemctl daemon-reload
 sudo systemctl start transit-ch-import.service
 ```
 
-The initial import must succeed before starting the backend. It creates the snapshot and leaves the backend stopped. If you already installed the earlier `/var/lib/transit-ch` setup, follow the [migration notes](deploy/README.md#install-systemd-units) to update any existing backend override. Then enable startup at boot and the refresh timer:
+The initial import must succeed before starting the backend. It creates the snapshot and leaves the backend stopped. Then enable startup at boot and the refresh timer:
 
 ```bash
 sudo systemctl enable --now transit-ch.service transit-ch-import.timer
@@ -176,6 +178,81 @@ sudo journalctl -u transit-ch.service -u transit-ch-import.service -n 100 --no-p
 sudo systemctl start transit-ch-import.service
 ```
 
-After replacing the backend executable, restart it with `sudo systemctl restart transit-ch.service`. After changing unit files, run `sudo systemctl daemon-reload`; also restart `transit-ch-import.timer` if its schedule changed. Caddy continues to use the existing port and frontend path.
-
 The success-only restart hook and persistent calendar behavior follow the [systemd service documentation](https://github.com/systemd/systemd/blob/v256/man/systemd.service.xml) and [timer documentation](https://github.com/systemd/systemd/blob/v256/man/systemd.timer.xml).
+
+### Updating to a new version
+
+Run these commands on the Debian or Ubuntu server as your normal SSH user. They assume the source checkout is in `~/src/transit-ch` and the application is installed under `/opt/transit-ch`, as described in the installation guide. Adjust the checkout path if needed.
+
+First pull the latest code, build both Go programs, and check and build the frontend. The running application stays available during this step. The build and installation blocks run in subshells that stop on errors.
+
+```bash
+(
+  set -e
+  cd ~/src/transit-ch
+  git pull --ff-only
+  mkdir -p frontend/tmp/server-build
+  go test ./...
+  go build -trimpath -o frontend/tmp/server-build/transit-ch-backend ./backend
+  go build -trimpath -o frontend/tmp/server-build/transit-ch-importer ./importer
+  cd frontend
+  npm install --include=dev
+  npm run check
+)
+```
+
+Continue only after the build succeeds, including the compression step. The installation below briefly stops the backend and any running data import while replacing the executables. It keeps `/opt/transit-ch/platforms.bin` and the service account in place.
+
+A normal application update does not require another import. If a release changes the snapshot format, insert `sudo systemctl start transit-ch-import.service` after `daemon-reload` and before starting the backend in the block below.
+
+```bash
+(
+  set -e
+  cd ~/src/transit-ch
+  sudo systemctl stop transit-ch-import.timer transit-ch-import.service
+  sudo systemctl stop transit-ch.service
+
+  sudo install -o root -g root -m 0755 \
+    frontend/tmp/server-build/transit-ch-backend \
+    frontend/tmp/server-build/transit-ch-importer /opt/transit-ch/
+  sudo install -o root -g root -m 0644 \
+    deploy/systemd/transit-ch.service \
+    deploy/systemd/transit-ch-import.service \
+    deploy/systemd/transit-ch-import.timer /etc/systemd/system/
+  sudo systemd-analyze verify \
+    /etc/systemd/system/transit-ch.service \
+    /etc/systemd/system/transit-ch-import.service \
+    /etc/systemd/system/transit-ch-import.timer
+  sudo systemctl daemon-reload
+
+  # Copy assets before publishing the new app entry point and PWA manifest.
+  sudo rsync -a --chown=root:root --chmod=D755,F644 \
+    --exclude='/index.html*' --exclude='/ngsw.json*' \
+    frontend/dist/transit-ch/browser/ /opt/transit-ch/dist/transit-ch/browser/
+  sudo rsync -a --chown=root:root --chmod=D755,F644 \
+    --include='/index.html*' --include='/ngsw.json*' --exclude='*' \
+    frontend/dist/transit-ch/browser/ /opt/transit-ch/dist/transit-ch/browser/
+
+  sudo systemctl start transit-ch.service
+  sudo systemctl start transit-ch-import.timer
+)
+```
+
+Both copies include the compressed sidecar files. They retain existing hashed bundles so open browser tabs can still load their assets. The daily timer continues refreshing platform data.
+
+Frontend files are served immediately without a Caddy reload. If the release also changes `Caddyfile`, apply those changes to `/etc/caddy/Caddyfile`, keeping your configured hostname, then validate and reload:
+
+```bash
+sudo caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile && \
+  sudo systemctl reload caddy
+```
+
+Check the services and the platform API:
+
+```bash
+systemctl status transit-ch.service transit-ch-import.timer --no-pager
+curl --fail --show-error 'http://127.0.0.1:34341/traffic-point-v2/8503000?platform=41'
+sudo journalctl -u transit-ch.service -u transit-ch-import.service -n 50 --no-pager
+```
+
+Reload the website or reopen the installed PWA. If the app displays **Update available**, choose **Reload now** to activate the new version. The app's translations are included in that version's JavaScript bundle.
