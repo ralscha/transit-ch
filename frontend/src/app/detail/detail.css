@@ -118,3 +118,11 @@ h3 {
   font-size: 0.75rem;
   color: #666;
 }
+.platform-link {
+  color: #b5000b;
+  text-underline-offset: 3px;
+}
+.platform-link:focus-visible {
+  outline: 2px solid #e3000f;
+  outline-offset: 3px;
+}

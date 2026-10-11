@@ -48,6 +48,21 @@
     "route": "Route",
     "plShort": "Gl"
   },
+  "platformMap": {
+    "show": "Gleis / Kante {{platform}} auf der Karte zeigen",
+    "title": "Gleis / Kante {{platform}}",
+    "marker": "Position von Gleis / Kante {{platform}}",
+    "mapLabel": "Karte von {{station}}, Gleis / Kante {{platform}}",
+    "back": "Zurück",
+    "choose": "Gleise und Kanten",
+    "loading": "Position wird geladen…",
+    "unavailable": "Für dieses Gleis oder diese Haltekante ist keine eindeutige Position verfügbar.",
+    "error": "Die Position konnte nicht geladen werden. Bitte erneut versuchen.",
+    "mapError": "Die Karte konnte nicht geladen werden. Bitte Verbindung prüfen und erneut versuchen.",
+    "retry": "Erneut versuchen",
+    "positionNote": "Veröffentlichte Position. Stockwerke und Zugangswege werden nicht dargestellt.",
+    "source": "Haltekantendaten: Open Transport Data Switzerland (SKI)"
+  },
   "updateDialog": {
     "title": "Update verfügbar",
     "description": "Eine neue Version der Transit CH App ist bereit. Neuladen, um das Update anzuwenden.",

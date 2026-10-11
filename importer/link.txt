@@ -1,1 +1,2 @@
-https://data.opentransportdata.swiss/dataset/b06d90be-91c6-440e-ab97-09f579d2fad0/resource/71ea6819-e128-4fda-8ea7-332283309351/download/full-world-traffic-point.csv
+https://data.opentransportdata.swiss/dataset/traffic-point-v2
+Use actual-date-world-traffic-point.csv. The importer discovers the current resource URL.

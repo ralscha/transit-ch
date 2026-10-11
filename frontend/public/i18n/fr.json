@@ -48,6 +48,21 @@
     "route": "Itinéraire",
     "plShort": "V"
   },
+  "platformMap": {
+    "show": "Afficher le quai {{platform}} sur la carte",
+    "title": "Quai {{platform}}",
+    "marker": "Position du quai {{platform}}",
+    "mapLabel": "Carte de {{station}}, quai {{platform}}",
+    "back": "Retour",
+    "choose": "Quais",
+    "loading": "Chargement de la position du quai…",
+    "unavailable": "Aucune position précise n’est disponible pour ce quai.",
+    "error": "La position du quai n’a pas pu être chargée. Veuillez réessayer.",
+    "mapError": "La carte n’a pas pu être chargée. Vérifiez votre connexion et réessayez.",
+    "retry": "Réessayer",
+    "positionNote": "Position publiée du quai. Les niveaux intérieurs et les voies d’accès ne sont pas indiqués.",
+    "source": "Données des quais : Open Transport Data Switzerland (SKI)"
+  },
   "updateDialog": {
     "title": "Mise à jour disponible",
     "description": "Une nouvelle version de l'application Transit CH est prête. Rechargez pour appliquer.",

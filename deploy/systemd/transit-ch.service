@@ -1,0 +1,27 @@
+[Unit]
+Description=Transit CH platform API
+After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=exec
+User=transit-ch
+Group=transit-ch
+WorkingDirectory=/opt/transit-ch
+Environment=PLATFORM_DB=/var/lib/transit-ch/platforms.bin
+ExecStart=/opt/transit-ch/transit-ch-backend -port 34341
+Restart=on-failure
+RestartSec=5s
+# The backend allows 15 seconds for graceful shutdown.
+TimeoutStopSec=20s
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target

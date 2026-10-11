@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { StateService } from '../state.service';
 import { Location } from '@angular/common';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -8,7 +8,7 @@ import { LineBadgeComponent } from '../line-badge.component';
 @Component({
   selector: 'app-detail',
   standalone: true,
-  imports: [TranslocoPipe, LineBadgeComponent],
+  imports: [TranslocoPipe, LineBadgeComponent, RouterLink],
   templateUrl: './detail.html',
   styleUrls: ['./detail.css'],
 })

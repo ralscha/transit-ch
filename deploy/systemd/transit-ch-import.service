@@ -1,0 +1,24 @@
+[Unit]
+Description=Refresh Transit CH platform data
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=transit-ch
+Group=transit-ch
+StateDirectory=transit-ch
+StateDirectoryMode=0750
+WorkingDirectory=/var/lib/transit-ch
+ExecStart=/opt/transit-ch/transit-ch-importer -out /var/lib/transit-ch/platforms.bin
+# Only runs after a successful import. The + grants root to this command alone;
+# the downloader runs as transit-ch. An intentionally stopped API stays stopped.
+ExecStartPost=+/usr/bin/systemctl try-restart transit-ch.service
+TimeoutStartSec=15min
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=

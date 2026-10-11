@@ -1,5 +1,4 @@
 import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
-import { form, FormField, FormRoot } from '@angular/forms/signals';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, type Subscription } from 'rxjs';
@@ -14,13 +13,12 @@ interface SearchFormModel {
 @Component({
   selector: 'app-search',
   standalone: true,
-  imports: [FormField, FormRoot, TranslocoPipe],
+  imports: [TranslocoPipe],
   templateUrl: './search.html',
   styleUrls: ['./search.css'],
 })
 export class SearchComponent {
   readonly searchModel = signal<SearchFormModel>({ query: '' });
-  readonly searchForm = form(this.searchModel);
   readonly state = inject(StateService);
   readonly api = inject(TransportApiService);
   readonly router = inject(Router);
@@ -92,6 +90,11 @@ export class SearchComponent {
 
   goBack() {
     this.router.navigate(['/']);
+  }
+
+  updateQuery(event: Event) {
+    const input = event.target;
+    if (input instanceof HTMLInputElement) this.searchModel.set({ query: input.value });
   }
 
   selectStation(station: StationSearchResult) {

@@ -1,0 +1,53 @@
+<header class="top-bar">
+  <button
+    type="button"
+    class="back"
+    (click)="goBack()"
+    [attr.aria-label]="'platformMap.back' | transloco"
+  >
+    &#8592;
+  </button>
+  <div>
+    <h1>{{ 'platformMap.title' | transloco: { platform: platform() } }}</h1>
+    <p>{{ station() }}</p>
+  </div>
+</header>
+<div class="map-area">
+  <div
+    #mapContainer
+    class="map"
+    role="region"
+    [attr.aria-label]="
+      'platformMap.mapLabel' | transloco: { station: station(), platform: platform() }
+    "
+  ></div>
+  @if (status() === 'loading') {
+    <div class="notice" role="status">{{ 'platformMap.loading' | transloco }}</div>
+  }
+  @if (status() === 'unavailable' || status() === 'error' || status() === 'mapError') {
+    <div class="notice" role="status">
+      <p>{{ 'platformMap.' + status() | transloco }}</p>
+      @if (status() !== 'unavailable') {
+        <button type="button" (click)="retry()">{{ 'platformMap.retry' | transloco }}</button>
+      }
+    </div>
+  }
+  @if (points().length > 1) {
+    <div class="platforms" [attr.aria-label]="'platformMap.choose' | transloco">
+      @for (point of points(); track point.sloid) {
+        <button type="button" (click)="focusPoint(point)">
+          {{ 'platformMap.title' | transloco: { platform: point.platform } }}
+        </button>
+      }
+    </div>
+  }
+</div>
+<footer>
+  <p>{{ 'platformMap.positionNote' | transloco }}</p>
+  <a
+    href="https://data.opentransportdata.swiss/dataset/traffic-point-v2"
+    target="_blank"
+    rel="noopener noreferrer"
+    >{{ 'platformMap.source' | transloco }}</a
+  >
+</footer>

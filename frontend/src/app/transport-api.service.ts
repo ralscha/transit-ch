@@ -25,6 +25,7 @@ interface StationboardDto {
   to: string;
   passList?: StopDto[] | null;
   stop?: {
+    station?: LocationDto | null;
     arrival?: string | null;
     arrivalTimestamp?: number | null;
     departure?: string | null;
@@ -40,6 +41,7 @@ interface StationboardDto {
 
 interface StopDto {
   station?: {
+    id?: string | null;
     name?: string | null;
   } | null;
   arrival?: string | null;
@@ -71,6 +73,9 @@ export interface StationboardEntry {
   departureLabel: string;
   prognosisLabel: string | null;
   platformLabel: string;
+  platform: string | null;
+  stationId: string | null;
+  stationName: string;
   delayMinutes: number;
   transportMode: TransportMode;
   lineLabel: string;
@@ -79,6 +84,7 @@ export interface StationboardEntry {
 }
 
 export interface RouteStop {
+  stationId: string | null;
   stationName: string;
   plannedTimeLabel: string;
   realtimeTimeLabel: string | null;
@@ -267,6 +273,9 @@ export class TransportApiService {
             departureLabel: this.#formatSwissTime(scheduledDate),
             prognosisLabel: realtimeDate ? this.#formatSwissTime(realtimeDate) : null,
             platformLabel: platform?.trim() ? platform : 'TBD',
+            platform: platform?.trim() || null,
+            stationId: entry.stop?.station?.id ?? station.id,
+            stationName: entry.stop?.station?.name ?? station.name,
             delayMinutes,
             transportMode: this.#resolveTransportMode(entry.category),
             lineLabel: this.#buildLineLabel(entry),
@@ -398,6 +407,7 @@ export class TransportApiService {
     }
 
     return {
+      stationId: stop.station?.id ?? null,
       stationName,
       plannedTimeLabel: this.#formatSwissTime(new Date(plannedIso)),
       realtimeTimeLabel: realtimeIso ? this.#formatSwissTime(new Date(realtimeIso)) : null,

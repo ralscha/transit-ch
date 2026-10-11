@@ -1,37 +1,36 @@
 transit-ch.rasc.ch {
-    root * /opt/transit-ch/dist/transit-ch/browser
+	root * /opt/transit-ch/dist/transit-ch/browser
 
-    header {
-        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-        X-Content-Type-Options "nosniff"
-        X-Frame-Options "DENY"
-        Referrer-Policy "strict-origin-when-cross-origin"
-        Permissions-Policy "camera=(), microphone=(), geolocation=(self)"
-        Cross-Origin-Opener-Policy "same-origin"
-        Cross-Origin-Resource-Policy "cross-origin"
-        X-XSS-Protection "0"
-    }
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(self)"
+		Cross-Origin-Opener-Policy "same-origin"
+		Cross-Origin-Resource-Policy "cross-origin"
+		X-XSS-Protection "0"
+	}
 
-    # Disable caching for service worker files to ensure updates are detected
-    @sw {
-        path /ngsw.json
-    }
-    header @sw Cache-Control "no-cache, no-store, must-revalidate"
+	handle /traffic-point-v2/* {
+		reverse_proxy 127.0.0.1:34341
+	}
+	handle {
+		route {
+			# Set cache headers after rewriting SPA routes to index.html.
+			try_files {path} /index.html
+			header Cache-Control "public, max-age=0, must-revalidate"
 
-    # Deep cache static assets like JS, CSS, and fonts (which have unique hashes in Angular)
-    @staticAssets {
-        path *.js *.css *.woff2 *.ico *.webp *.png *.svg
-    }
-    header @staticAssets Cache-Control "public, max-age=31536000, immutable"
+			# Only Angular bundles with content hashes are immutable.
+			@hashedBundles path_regexp hashedBundles ^/[^/]+-[A-Z0-9]{8}\.(js|css)$
+			header @hashedBundles Cache-Control "public, max-age=31536000, immutable"
 
-    @backend {
-        path /traffic-point-v2 /traffic-point-v2/*
-    }
-    reverse_proxy @backend localhost:34341
+			@sw path /ngsw.json /ngsw-worker.js /safety-worker.js /worker-basic.min.js
+			header @sw Cache-Control "no-cache, no-store, must-revalidate"
 
-    file_server {
-        precompressed br gzip zstd
-    }
-
-    try_files {path} /index.html
+			file_server {
+				precompressed br gzip zstd
+			}
+		}
+	}
 }

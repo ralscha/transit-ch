@@ -19,11 +19,7 @@ func main() {
 		logger.Error("open traffic point database", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
-	defer func() {
-		if closeErr := trafficPointStore.Close(); closeErr != nil {
-			logger.Error("close traffic point database", slog.String("error", closeErr.Error()))
-		}
-	}()
+	logger.Info("platform snapshot loaded", slog.Int("platforms", trafficPointStore.Count()), slog.Int("bytes", trafficPointStore.Size()), slog.String("date", trafficPointStore.Date().Format("2006-01-02")))
 
 	if err := runServer(logger, port, trafficPointStore); err != nil {
 		logger.Error("server stopped with error", slog.String("error", err.Error()))

@@ -1,89 +1,66 @@
 package main
 
 import (
-	"fmt"
-	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
+	"transit-ch/internal/platformstore"
 )
 
-func (entry storedTrafficPointEntry) toJSON() []byte {
-	payload := make([]byte, 0, 32)
-	payload = append(payload, '{', '"', 'l', 'a', 't', '"', ':')
-	payload = append(payload, entry.Lat...)
-	payload = append(payload, ',', '"', 'l', 'n', 'g', '"', ':')
-	payload = append(payload, entry.Lng...)
-	payload = append(payload, '}')
-	return payload
-}
-
-type trafficPointRequest struct {
-	number      int
-	designation string
-}
-
 func (handler apiHandler) handleTrafficPoint(writer http.ResponseWriter, request *http.Request) {
-	trafficPoint, statusCode, err := parseTrafficPointRequest(request)
-	if err != nil {
-		if statusCode == http.StatusNotFound {
-			notFound(writer)
+	number, err := strconv.ParseUint(request.PathValue("number"), 10, 32)
+	if err != nil || number == 0 {
+		writeJSONError(writer, http.StatusBadRequest, "station must be a positive integer")
+		return
+	}
+	platform := request.PathValue("designation")
+	if platform == "" {
+		platform = request.URL.Query().Get("platform")
+	}
+	platform = platformstore.Normalize(platform)
+	if platform == "" || len(platform) > 96 {
+		writeJSONError(writer, http.StatusBadRequest, "platform is required (maximum 96 bytes)")
+		return
+	}
+	var points [8][]byte
+	count := 0
+	if point := handler.trafficPointStore.Lookup(uint32(number), platform); point != nil {
+		points[0] = point
+		count = 1
+	} else {
+		// Exact compound labels take priority. Slash-separated alternatives must
+		// all resolve; never substitute the station centre or an arbitrary edge.
+		parts := strings.Split(platform, "/")
+		if len(parts) < 2 || len(parts) > len(points) {
+			writeJSONError(writer, http.StatusNotFound, "platform location unavailable")
 			return
 		}
-
-		writeJSONError(writer, statusCode, err.Error())
-		return
-	}
-
-	response, found, err := handler.trafficPointStore.Lookup(trafficPoint)
-	if err != nil {
-		handler.logger.Error(
-			"traffic point lookup failed",
-			slog.Int("number", trafficPoint.number),
-			slog.String("designation", trafficPoint.designation),
-			slog.String("error", err.Error()),
-		)
-		writeJSONError(writer, http.StatusInternalServerError, "internal server error")
-		return
-	}
-
-	if !found {
-		notFound(writer)
-		return
-	}
-
-	writeTrafficPointJSON(writer, http.StatusOK, response)
-}
-
-func writeTrafficPointJSON(writer http.ResponseWriter, statusCode int, value storedTrafficPointEntry) {
-	writer.Header().Set("Content-Type", contentTypeJSON)
-	writer.Header().Set("Cache-Control", trafficPointCacheControlHeader)
-	writer.WriteHeader(statusCode)
-
-	_, _ = writer.Write(value.toJSON())
-}
-
-func parseTrafficPointRequest(request *http.Request) (trafficPointRequest, int, error) {
-	numberSegment := request.PathValue("number")
-	if numberSegment == "" {
-		return trafficPointRequest{}, http.StatusBadRequest, fmt.Errorf("number is required")
-	}
-
-	number, err := strconv.Atoi(numberSegment)
-	if err != nil {
-		return trafficPointRequest{}, http.StatusBadRequest, fmt.Errorf("number must be an integer")
-	}
-
-	if number < 0 {
-		return trafficPointRequest{}, http.StatusBadRequest, fmt.Errorf("number must be non-negative")
-	}
-
-	parsedRequest := trafficPointRequest{number: number}
-	if request.Pattern == "GET /traffic-point-v2/{number}/{designation}" {
-		parsedRequest.designation = request.PathValue("designation")
-		if parsedRequest.designation == "" {
-			return trafficPointRequest{}, http.StatusBadRequest, fmt.Errorf("designation must not be empty when present")
+		seen := make(map[string]bool, len(parts))
+		for _, part := range parts {
+			part = platformstore.Normalize(part)
+			if seen[part] {
+				continue
+			}
+			point := handler.trafficPointStore.Lookup(uint32(number), part)
+			if point == nil {
+				writeJSONError(writer, http.StatusNotFound, "platform location unavailable")
+				return
+			}
+			seen[part] = true
+			points[count] = point
+			count++
 		}
 	}
-
-	return parsedRequest, http.StatusOK, nil
+	writer.Header().Set("Content-Type", contentTypeJSON)
+	writer.Header().Set("Cache-Control", trafficPointCacheControlHeader)
+	writer.Header().Set("X-Platform-Data-Date", handler.trafficPointStore.Date().Format("2006-01-02"))
+	writer.WriteHeader(http.StatusOK)
+	_, _ = writer.Write([]byte(`{"points":[`))
+	for i := 0; i < count; i++ {
+		if i > 0 {
+			_, _ = writer.Write([]byte(","))
+		}
+		_, _ = writer.Write(points[i])
+	}
+	_, _ = writer.Write([]byte("]}"))
 }

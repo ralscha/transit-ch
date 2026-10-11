@@ -48,6 +48,21 @@
     "route": "Route",
     "plShort": "Pl"
   },
+  "platformMap": {
+    "show": "Show platform {{platform}} on map",
+    "title": "Platform {{platform}}",
+    "marker": "Platform {{platform}} position",
+    "mapLabel": "Map of {{station}}, platform {{platform}}",
+    "back": "Back",
+    "choose": "Platforms",
+    "loading": "Loading platform location…",
+    "unavailable": "No precise location is available for this platform.",
+    "error": "The platform location could not be loaded. Please try again.",
+    "mapError": "The map could not be loaded. Check your connection and try again.",
+    "retry": "Try again",
+    "positionNote": "Published platform position. Indoor levels and access routes are not shown.",
+    "source": "Platform data: Open Transport Data Switzerland (SKI)"
+  },
   "updateDialog": {
     "title": "Update available",
     "description": "A new version of Transit CH app is ready. Reload the app to apply the update.",

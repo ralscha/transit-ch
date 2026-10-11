@@ -91,23 +91,35 @@
           <span class="board-header__platform">{{ 'stationboard.platform' | transloco }}</span>
         </div>
         @for (entry of state.stationboard(); track entry.id) {
-          <a class="row" [routerLink]="['/detail', entry.id]">
-            <span class="line-cell">
-              <app-line-badge
-                [label]="entry.lineLabel"
-                [mode]="entry.transportMode"
-                [badgePath]="entry.lineBadgePath"
-              />
-            </span>
-            <span class="to">{{ entry.to }}</span>
-            <span class="time">
-              {{ entry.departureLabel }}
-              @if (entry.delayMinutes > 0) {
-                <span class="delay">+{{ entry.delayMinutes }}</span>
-              }
-            </span>
-            <span class="platform">{{ entry.platformLabel }}</span>
-          </a>
+          <div class="row">
+            <a class="journey-link" [routerLink]="['/detail', entry.id]">
+              <span class="line-cell">
+                <app-line-badge
+                  [label]="entry.lineLabel"
+                  [mode]="entry.transportMode"
+                  [badgePath]="entry.lineBadgePath"
+                />
+              </span>
+              <span class="to">{{ entry.to }}</span>
+              <span class="time">
+                {{ entry.departureLabel }}
+                @if (entry.delayMinutes > 0) {
+                  <span class="delay">+{{ entry.delayMinutes }}</span>
+                }
+              </span>
+            </a>
+            @if (entry.stationId && entry.platform) {
+              <a
+                class="platform platform-link"
+                [routerLink]="['/platform', entry.stationId]"
+                [queryParams]="{ platform: entry.platform, station: entry.stationName }"
+                [attr.aria-label]="'platformMap.show' | transloco: { platform: entry.platform }"
+                >{{ entry.platformLabel }}</a
+              >
+            } @else {
+              <span class="platform">{{ entry.platformLabel }}</span>
+            }
+          </div>
         }
       </div>
     }

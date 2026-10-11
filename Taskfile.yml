@@ -11,6 +11,7 @@ tasks:
     deps:
       - format-backend
       - format-importer
+      - format-storage
       - format-frontend
 
   build:
@@ -52,12 +53,16 @@ tasks:
       - npm run lint -- --fix
       - npm run format
 
+  format-storage:
+    desc: Format the shared platform storage engine
+    cmds:
+      - go fmt ./internal/...
+
   lint:
     desc: Run linters for all code
     cmds:
       - task lint-frontend
-      - docker run --rm -v {{toSlash .ROOT_DIR}}/importer:/app -w /app golangci/golangci-lint:v2.13.2 golangci-lint run -v --timeout 5m
-      - docker run --rm -v {{toSlash .ROOT_DIR}}/backend:/app -w /app golangci/golangci-lint:v2.13.2 golangci-lint run -v --timeout 5m
+      - docker run --rm -v {{toSlash .ROOT_DIR}}:/app -w /app golangci/golangci-lint:v2.13.2 golangci-lint run -v --timeout 5m
 
   lint-frontend:
     desc: Run linters for frontend TypeScript code
@@ -66,10 +71,21 @@ tasks:
       - npm run lint
 
   test:
-    desc: Run backend and importer tests
-    deps:
-      - test-backend
-      - test-importer
+    desc: Run backend, importer and storage tests
+    cmds:
+      - go test ./...
+
+  import-platforms:
+    desc: Download the current platform export and build the backend snapshot
+    cmds:
+      - go run ./importer -out backend/platforms.bin
+
+  benchmark-storage:
+    desc: Measure lookups using the imported platform snapshot
+    env:
+      PLATFORM_BENCH_DB: '{{.ROOT_DIR}}/backend/platforms.bin'
+    cmds:
+      - go test ./internal/platformstore -run '^$' -bench . -benchmem
 
   test-backend:
     desc: Run backend Go tests

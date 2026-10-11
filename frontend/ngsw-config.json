@@ -3,6 +3,14 @@
   "index": "/index.html",
   "assetGroups": [
     {
+      "name": "platform-map",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/maplibre-gl-*.js", "/platform-map-*.js", "/maplibre/*.mjs"]
+      }
+    },
+    {
       "name": "app",
       "installMode": "prefetch",
       "resources": {

@@ -1,309 +1,208 @@
 package main
 
 import (
-	"context"
+	"bufio"
 	"encoding/csv"
-	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
+	"net/url"
 	"os"
-	"path/filepath"
-	"sort"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
+	_ "time/tzdata"
 
-	"github.com/cockroachdb/pebble/v2"
+	"transit-ch/internal/platformstore"
 )
 
-const (
-	csvURL          = "https://data.opentransportdata.swiss/dataset/b06d90be-91c6-440e-ab97-09f579d2fad0/resource/71ea6819-e128-4fda-8ea7-332283309351/download/full-world-traffic-point.csv"
-	csvFileName     = "71ea6819-e128-4fda-8ea7-332283309351.csv"
-	dbDirName       = "traffic-points"
-	batchSize       = 1000
-	downloadTimeout = 10 * time.Minute
-)
+const catalogueURL = "https://data.opentransportdata.swiss/dataset/traffic-point-v2"
 
-var logger = log.New(os.Stdout, "", log.LstdFlags)
-
-type trafficPointEntry struct {
-	Designation string `json:"designation"`
-	Lat         string `json:"lat"`
-	Lng         string `json:"lng"`
-}
-
-type trafficPointValue struct {
-	Entries []trafficPointEntry `json:"entries"`
-}
+type importStats struct{ Rows, Invalid, Missing, Ambiguous, Imported int }
 
 func main() {
-	workingDir, err := os.Getwd()
+	input := flag.String("input", "", "read a local atlas CSV instead of downloading today's export")
+	out := flag.String("out", "platforms.bin", "snapshot output path")
+	flag.Parse()
+	zone, err := time.LoadLocation("Europe/Zurich")
 	if err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
-
-	csvPath := filepath.Join(workingDir, csvFileName)
-	if err := ensureCSV(csvPath); err != nil {
-		logger.Fatal(err)
+	asOf := time.Now().In(zone)
+	var source io.ReadCloser
+	if *input != "" {
+		source, err = os.Open(*input)
+	} else {
+		source, err = downloadCSV(&http.Client{Timeout: 5 * time.Minute})
 	}
-
-	pointsByNumber, err := loadTrafficPoints(csvPath)
 	if err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
-
-	dbPath := filepath.Join(workingDir, dbDirName)
-	if err := rebuildDatabase(dbPath, pointsByNumber); err != nil {
-		logger.Fatal(err)
+	entries, stats, err := loadPlatforms(source, asOf)
+	closeErr := source.Close()
+	if err != nil {
+		log.Fatal(err)
 	}
-
-	logger.Printf("imported %d traffic point keys into %s", len(pointsByNumber), dbPath)
+	if closeErr != nil {
+		log.Fatal(closeErr)
+	}
+	if err = platformstore.WriteFile(*out, entries, asOf); err != nil {
+		log.Fatal(err)
+	}
+	info, err := os.Stat(*out)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("snapshot=%s date=%s rows=%d platforms=%d invalid=%d missing=%d ambiguous=%d bytes=%d", *out, asOf.Format("2006-01-02"), stats.Rows, stats.Imported, stats.Invalid, stats.Missing, stats.Ambiguous, info.Size())
 }
 
-func ensureCSV(csvPath string) error {
-	if _, err := os.Stat(csvPath); err == nil {
-		return nil
-	} else if !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("stat csv: %w", err)
-	}
-
-	client := http.Client{Timeout: downloadTimeout}
-	response, err := client.Get(csvURL)
-	if err != nil {
-		return fmt.Errorf("download csv: %w", err)
-	}
-	defer func() {
-		if closeErr := response.Body.Close(); closeErr != nil {
-			logger.Printf("close response body: %v", closeErr)
-		}
-	}()
-
-	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("download csv: unexpected status %s", response.Status)
-	}
-
-	file, err := os.Create(csvPath)
-	if err != nil {
-		return fmt.Errorf("create csv: %w", err)
-	}
-
-	if _, err := io.Copy(file, response.Body); err != nil {
-		if closeErr := file.Close(); closeErr != nil {
-			logger.Printf("close csv after write failure: %v", closeErr)
-		}
-		return fmt.Errorf("write csv: %w", err)
-	}
-
-	if err := file.Close(); err != nil {
-		return fmt.Errorf("close csv: %w", err)
-	}
-
-	return nil
-}
-
-func loadTrafficPoints(csvPath string) (map[string][]trafficPointEntry, error) {
-	file, err := os.Open(csvPath)
-	if err != nil {
-		return nil, fmt.Errorf("open csv: %w", err)
-	}
-	defer func() {
-		if closeErr := file.Close(); closeErr != nil {
-			logger.Printf("close csv reader: %v", closeErr)
-		}
-	}()
-
-	return loadTrafficPointsFromReader(file, time.Now())
-}
-
-func loadTrafficPointsFromReader(source io.Reader, today time.Time) (map[string][]trafficPointEntry, error) {
-	currentDate := dateOnly(today)
-
-	reader := csv.NewReader(source)
-	reader.FieldsPerRecord = -1
-	reader.ReuseRecord = true
-
-	header, err := reader.Read()
-	if err != nil {
-		return nil, fmt.Errorf("read csv header: %w", err)
-	}
-
-	columnIndex, err := requiredColumns(header)
+// Resource UUIDs change. Discover today's CSV from the stable catalogue page
+// on each run instead of pinning an eventually obsolete download URL.
+func downloadCSV(client *http.Client) (io.ReadCloser, error) {
+	response, err := client.Get(catalogueURL)
 	if err != nil {
 		return nil, err
 	}
+	defer func(body io.ReadCloser) { _ = body.Close() }(response.Body)
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("catalogue: %s", response.Status)
+	}
+	page, err := io.ReadAll(io.LimitReader(response.Body, 2<<20))
+	if err != nil {
+		return nil, err
+	}
+	download, err := findDownloadURL(string(page))
+	if err != nil {
+		return nil, err
+	}
+	response, err = client.Get(download)
+	if err != nil {
+		return nil, err
+	}
+	if response.StatusCode != http.StatusOK {
+		_ = response.Body.Close()
+		return nil, fmt.Errorf("CSV download: %s", response.Status)
+	}
+	return response.Body, nil
+}
 
-	pointsByNumber := make(map[string][]trafficPointEntry)
-	seenEntries := make(map[string]map[trafficPointEntry]struct{})
+func findDownloadURL(page string) (string, error) {
+	pattern := regexp.MustCompile(`href="([^"]*/download/actual-date-world-traffic-point\.csv)"`)
+	for _, match := range pattern.FindAllStringSubmatch(page, -1) {
+		u, err := url.Parse(match[1])
+		if err == nil && u.Scheme == "https" && u.Host == "data.opentransportdata.swiss" {
+			return u.String(), nil
+		}
+	}
+	return "", errors.New("current platform export not found on catalogue page")
+}
 
+func loadPlatforms(source io.Reader, asOf time.Time) ([]platformstore.Entry, importStats, error) {
+	var stats importStats
+	buffer := bufio.NewReader(source)
+	headerLine, err := buffer.Peek(4096)
+	if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, bufio.ErrBufferFull) {
+		return nil, stats, err
+	}
+	firstLine := strings.SplitN(string(headerLine), "\n", 2)[0]
+	reader := csv.NewReader(buffer)
+	if strings.Count(firstLine, ";") > strings.Count(firstLine, ",") {
+		reader.Comma = ';'
+	}
+	reader.ReuseRecord = true
+	header, err := reader.Read()
+	if err != nil {
+		return nil, stats, err
+	}
+	columns := make(map[string]int, len(header))
+	for i, name := range header {
+		columns[strings.TrimPrefix(strings.TrimSpace(name), "\ufeff")] = i
+	}
+	for _, name := range []string{"sloid", "number", "validFrom", "validTo", "designation", "designationOperational", "trafficPointElementType", "wgs84North", "wgs84East", "status"} {
+		if _, ok := columns[name]; !ok {
+			return nil, stats, fmt.Errorf("CSV missing required column %q", name)
+		}
+	}
+	type key struct {
+		station  uint32
+		platform string
+	}
+	entries := make(map[key]platformstore.Entry)
+	ambiguous := make(map[key]bool)
+	today := asOf.Format("2006-01-02")
 	for {
-		record, err := reader.Read()
+		row, err := reader.Read()
 		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("read csv row: %w", err)
+			return nil, stats, fmt.Errorf("row %d: %w", stats.Rows+2, err)
 		}
-
-		number := record[columnIndex["number"]]
-		if number == "" {
+		stats.Rows++
+		get := func(name string) string { return strings.TrimSpace(row[columns[name]]) }
+		if get("trafficPointElementType") != "BOARDING_PLATFORM" || get("status") != "VALIDATED" {
 			continue
 		}
-
-		isValid, err := isEntryValidOn(record[columnIndex["validFrom"]], record[columnIndex["validTo"]], currentDate)
-		if err != nil {
-			return nil, fmt.Errorf("invalid validity for number %s: %w", number, err)
+		from, to := get("validFrom"), get("validTo")
+		if _, err := time.Parse("2006-01-02", from); err != nil {
+			return nil, stats, fmt.Errorf("row %d: invalid validFrom", stats.Rows+1)
 		}
-		if !isValid {
+		if _, err := time.Parse("2006-01-02", to); err != nil {
+			return nil, stats, fmt.Errorf("row %d: invalid validTo", stats.Rows+1)
+		}
+		if from > to {
+			return nil, stats, fmt.Errorf("row %d: inverted validity", stats.Rows+1)
+		}
+		if from > today || to < today {
 			continue
 		}
-
-		designation := record[columnIndex["designation"]]
+		number, err := strconv.ParseUint(get("number"), 10, 32)
+		designation := get("designation")
 		if designation == "" {
-			designation = record[columnIndex["designationOperational"]]
+			designation = get("designationOperational")
 		}
-
-		entry := trafficPointEntry{
-			Designation: designation,
-			Lat:         record[columnIndex["wgs84North"]],
-			Lng:         record[columnIndex["wgs84East"]],
-		}
-
-		if _, exists := seenEntries[number]; !exists {
-			seenEntries[number] = make(map[trafficPointEntry]struct{})
-		}
-		if _, duplicate := seenEntries[number][entry]; duplicate {
+		if err != nil || number == 0 || designation == "" || len(designation) > 96 || get("sloid") == "" {
+			stats.Invalid++
 			continue
 		}
-
-		seenEntries[number][entry] = struct{}{}
-		pointsByNumber[number] = append(pointsByNumber[number], entry)
-	}
-
-	for _, entries := range pointsByNumber {
-		sort.Slice(entries, func(i, j int) bool {
-			if entries[i].Designation != entries[j].Designation {
-				return entries[i].Designation < entries[j].Designation
+		k := key{uint32(number), platformstore.Normalize(designation)}
+		lat, latErr := strconv.ParseFloat(get("wgs84North"), 64)
+		lng, lngErr := strconv.ParseFloat(get("wgs84East"), 64)
+		if latErr != nil || lngErr != nil || math.IsNaN(lat) || math.IsNaN(lng) || math.IsInf(lat, 0) || math.IsInf(lng, 0) || lat < -90 || lat > 90 || lng < -180 || lng > 180 || (lat == 0 && lng == 0) {
+			stats.Missing++
+			ambiguous[k] = true
+			delete(entries, k)
+			continue
+		}
+		entry := platformstore.Entry{Station: uint32(number), Point: platformstore.Point{Platform: designation, Sloid: get("sloid"), Lat: lat, Lng: lng}}
+		if ambiguous[k] {
+			continue
+		}
+		if old, ok := entries[k]; ok {
+			if old.Point.Lat != lat || old.Point.Lng != lng {
+				stats.Ambiguous++
+				ambiguous[k] = true
+				delete(entries, k)
+				continue
 			}
-			if entries[i].Lat != entries[j].Lat {
-				return entries[i].Lat < entries[j].Lat
+			if old.Point.Sloid <= entry.Point.Sloid {
+				continue
 			}
-			return entries[i].Lng < entries[j].Lng
-		})
-	}
-
-	return pointsByNumber, nil
-}
-
-func requiredColumns(header []string) (map[string]int, error) {
-	indices := make(map[string]int, len(header))
-	for index, name := range header {
-		indices[name] = index
-	}
-
-	for _, name := range []string{"number", "validFrom", "validTo", "designation", "designationOperational", "wgs84East", "wgs84North"} {
-		if _, exists := indices[name]; !exists {
-			return nil, fmt.Errorf("csv missing required column %q", name)
 		}
+		entries[k] = entry
 	}
-
-	return indices, nil
-}
-
-func isEntryValidOn(validFrom string, validTo string, today time.Time) (bool, error) {
-	today = dateOnly(today)
-
-	fromDate, err := parseCSVDate(validFrom)
-	if err != nil {
-		return false, fmt.Errorf("parse validFrom %q: %w", validFrom, err)
+	result := make([]platformstore.Entry, 0, len(entries))
+	for _, entry := range entries {
+		result = append(result, entry)
 	}
-
-	toDate, err := parseCSVDate(validTo)
-	if err != nil {
-		return false, fmt.Errorf("parse validTo %q: %w", validTo, err)
+	stats.Imported = len(result)
+	if len(result) == 0 {
+		return nil, stats, errors.New("CSV contains no usable current platforms; previous snapshot retained")
 	}
-
-	return !today.Before(fromDate) && !today.After(toDate), nil
-}
-
-func parseCSVDate(value string) (time.Time, error) {
-	parsed, err := time.Parse("2006-01-02", strings.TrimSpace(value))
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	return dateOnly(parsed), nil
-}
-
-func dateOnly(value time.Time) time.Time {
-	return time.Date(value.Year(), value.Month(), value.Day(), 0, 0, 0, 0, time.UTC)
-}
-
-func rebuildDatabase(dbPath string, pointsByNumber map[string][]trafficPointEntry) error {
-	if err := os.RemoveAll(dbPath); err != nil {
-		return fmt.Errorf("remove existing db: %w", err)
-	}
-
-	db, err := pebble.Open(dbPath, &pebble.Options{})
-	if err != nil {
-		return fmt.Errorf("open pebble db: %w", err)
-	}
-	defer func() {
-		if closeErr := db.Close(); closeErr != nil {
-			logger.Printf("close pebble db: %v", closeErr)
-		}
-	}()
-
-	keys := make([]string, 0, len(pointsByNumber))
-	for key := range pointsByNumber {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-
-	batch := db.NewBatch()
-	defer func() {
-		if closeErr := batch.Close(); closeErr != nil {
-			logger.Printf("close pebble batch: %v", closeErr)
-		}
-	}()
-
-	writesInBatch := 0
-	for _, key := range keys {
-		payload, err := json.Marshal(trafficPointValue{Entries: pointsByNumber[key]})
-		if err != nil {
-			return fmt.Errorf("marshal value for %s: %w", key, err)
-		}
-
-		if err := batch.Set([]byte(key), payload, nil); err != nil {
-			return fmt.Errorf("set key %s: %w", key, err)
-		}
-
-		writesInBatch++
-		if writesInBatch == batchSize {
-			if err := batch.Commit(pebble.Sync); err != nil {
-				return fmt.Errorf("commit batch: %w", err)
-			}
-			if err := batch.Close(); err != nil {
-				return fmt.Errorf("close batch: %w", err)
-			}
-			batch = db.NewBatch()
-			writesInBatch = 0
-		}
-	}
-
-	if writesInBatch > 0 {
-		if err := batch.Commit(pebble.Sync); err != nil {
-			return fmt.Errorf("commit final batch: %w", err)
-		}
-	}
-
-	if len(keys) > 0 {
-		compactEnd := append([]byte(keys[len(keys)-1]), 0)
-		if err := db.Compact(context.Background(), []byte(keys[0]), compactEnd, false); err != nil {
-			return fmt.Errorf("compact database: %w", err)
-		}
-	}
-
-	return nil
+	return result, stats, nil
 }

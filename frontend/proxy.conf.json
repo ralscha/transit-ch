@@ -1,0 +1,6 @@
+{
+  "/traffic-point-v2/**": {
+    "target": "http://127.0.0.1:34341",
+    "secure": false
+  }
+}

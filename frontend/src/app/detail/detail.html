@@ -32,7 +32,23 @@
             }}:</strong
           >
           {{ selectedEntry.departureLabel }} ({{ 'detail.platform' | transloco }}
-          {{ selectedEntry.platformLabel }})
+          @if (selectedEntry.stationId && selectedEntry.platform) {
+            <a
+              class="platform-link"
+              [routerLink]="['/platform', selectedEntry.stationId]"
+              [queryParams]="{
+                platform: selectedEntry.platform,
+                station: selectedEntry.stationName,
+              }"
+              [attr.aria-label]="
+                'platformMap.show' | transloco: { platform: selectedEntry.platform }
+              "
+              >{{ selectedEntry.platformLabel }}</a
+            >
+          } @else {
+            {{ selectedEntry.platformLabel }}
+          }
+          )
         </div>
         <div>
           <strong>{{ 'detail.status' | transloco }}:</strong>
@@ -62,7 +78,19 @@
             <div class="stop-time">
               <span>{{ stop.plannedTimeLabel }}</span>
               @if (stop.platformLabel) {
-                <small>{{ 'detail.plShort' | transloco }} {{ stop.platformLabel }}</small>
+                @if (stop.stationId) {
+                  <a
+                    class="platform-link"
+                    [routerLink]="['/platform', stop.stationId]"
+                    [queryParams]="{ platform: stop.platformLabel, station: stop.stationName }"
+                    [attr.aria-label]="
+                      'platformMap.show' | transloco: { platform: stop.platformLabel }
+                    "
+                    >{{ 'detail.plShort' | transloco }} {{ stop.platformLabel }}</a
+                  >
+                } @else {
+                  <small>{{ 'detail.plShort' | transloco }} {{ stop.platformLabel }}</small>
+                }
               }
             </div>
           </div>

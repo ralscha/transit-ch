@@ -7,5 +7,9 @@ export const routes: Routes = [
   { path: '', component: StationboardComponent },
   { path: 'search', component: SearchComponent },
   { path: 'detail/:id', component: DetailComponent },
+  {
+    path: 'platform/:stationId',
+    loadComponent: () => import('./platform-map/platform-map').then((m) => m.PlatformMapComponent),
+  },
   { path: '**', redirectTo: '' },
 ];

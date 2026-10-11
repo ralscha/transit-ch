@@ -10,7 +10,7 @@ const (
 	contentTypeJSON                = "application/json; charset=utf-8"
 	contentTypeText                = "text/plain; charset=utf-8"
 	errorResponseCacheControl      = "no-store"
-	trafficPointCacheControlHeader = "private, max-age=86400"
+	trafficPointCacheControlHeader = "public, max-age=300"
 )
 
 type apiHandler struct {
@@ -61,9 +61,4 @@ func writeJSON(writer http.ResponseWriter, statusCode int, value any) {
 
 func writeJSONError(writer http.ResponseWriter, statusCode int, message string) {
 	writeJSON(writer, statusCode, map[string]string{"error": message})
-}
-
-func notFound(writer http.ResponseWriter) {
-	writer.Header().Set("Content-Type", contentTypeText)
-	http.Error(writer, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 }

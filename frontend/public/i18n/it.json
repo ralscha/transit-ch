@@ -48,6 +48,21 @@
     "route": "Percorso",
     "plShort": "Bin"
   },
+  "platformMap": {
+    "show": "Mostra il binario {{platform}} sulla mappa",
+    "title": "Binario {{platform}}",
+    "marker": "Posizione del binario {{platform}}",
+    "mapLabel": "Mappa di {{station}}, binario {{platform}}",
+    "back": "Indietro",
+    "choose": "Binari",
+    "loading": "Caricamento della posizione del binario…",
+    "unavailable": "Non è disponibile una posizione precisa per questo binario.",
+    "error": "Impossibile caricare la posizione del binario. Riprova.",
+    "mapError": "Impossibile caricare la mappa. Controlla la connessione e riprova.",
+    "retry": "Riprova",
+    "positionNote": "Posizione pubblicata del binario. I livelli interni e i percorsi di accesso non sono indicati.",
+    "source": "Dati dei binari: Open Transport Data Switzerland (SKI)"
+  },
   "updateDialog": {
     "title": "Aggiornamento disponibile",
     "description": "È pronta una nuova versione dell'app Transit CH. Ricarica per applicare.",

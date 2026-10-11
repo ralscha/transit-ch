@@ -12,3 +12,4 @@ minimumReleaseAgeExclude:
   - '@angular-eslint/template-parser@22.6.0'
   - '@angular-eslint/utils@22.6.0'
   - angular-eslint@22.6.0
+  - maplibre-gl@6.14.0

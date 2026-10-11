@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily Transit CH platform data refresh
+
+[Timer]
+OnCalendar=*-*-* 01:30:00 Europe/Zurich
+Persistent=true
+Unit=transit-ch-import.service
+
+[Install]
+WantedBy=timers.target

@@ -1,3 +1,5 @@
+@import 'maplibre-gl/dist/maplibre-gl.css';
+
 :root {
   color-scheme: light;
   font-family: 'Bahnschrift', 'Segoe UI', Arial, sans-serif;
@@ -23,4 +25,28 @@ button,
 input {
   font: inherit;
   border-radius: 0;
+}
+
+.platform-map-marker {
+  min-width: 38px;
+  padding: 6px 10px;
+  border: 3px solid #fff;
+  border-radius: 6px;
+  background: #d5000d;
+  color: #fff;
+  font:
+    bold 16px / 1.2 'Segoe UI',
+    sans-serif;
+  text-align: center;
+  box-shadow: 0 2px 6px #0006;
+}
+.platform-map-marker::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  transform: translateX(-50%);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 8px solid #d5000d;
 }
