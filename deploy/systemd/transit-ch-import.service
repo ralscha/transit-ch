@@ -7,10 +7,8 @@ After=network-online.target
 Type=oneshot
 User=transit-ch
 Group=transit-ch
-StateDirectory=transit-ch
-StateDirectoryMode=0750
-WorkingDirectory=/var/lib/transit-ch
-ExecStart=/opt/transit-ch/transit-ch-importer -out /var/lib/transit-ch/platforms.bin
+WorkingDirectory=/opt/transit-ch
+ExecStart=/opt/transit-ch/transit-ch-importer -out /opt/transit-ch/platforms.bin
 # Only runs after a successful import. The + grants root to this command alone;
 # the downloader runs as transit-ch. An intentionally stopped API stays stopped.
 ExecStartPost=+/usr/bin/systemctl try-restart transit-ch.service
@@ -20,5 +18,8 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=true
 ProtectSystem=strict
+# The importer atomically replaces the snapshot using a temporary sibling file.
+# Install this directory as root:transit-ch mode 1775; keep binaries root-owned.
+ReadWritePaths=/opt/transit-ch
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 CapabilityBoundingSet=

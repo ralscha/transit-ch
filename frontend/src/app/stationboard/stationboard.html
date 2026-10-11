@@ -33,6 +33,9 @@
   </select>
   <button class="search-icon" routerLink="/search" aria-label="Search station">&#128269;</button>
 </header>
+<a class="destination-search-link" routerLink="/destination">
+  {{ 'destination.open' | transloco }} <span aria-hidden="true">&#8594;</span>
+</a>
 <div
   class="content"
   [class.is-pulling]="isPulling() || state.isRefreshingBoard()"

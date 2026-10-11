@@ -1,0 +1,247 @@
+<header class="top-bar">
+  <a routerLink="/" class="back" [attr.aria-label]="'platformMap.back' | transloco">&#8592;</a>
+  <h1>{{ 'destination.title' | transloco }}</h1>
+</header>
+<main>
+  <section class="search-panel" [attr.aria-label]="'destination.title' | transloco">
+    <p class="intro">{{ 'destination.intro' | transloco }}</p>
+    <form (submit)="$event.preventDefault(); search()">
+      <label for="destination-query">{{ 'destination.destination' | transloco }}</label>
+      <input
+        id="destination-query"
+        type="search"
+        autocomplete="off"
+        [value]="destinationQuery()"
+        (input)="queryChanged($event, 'destination')"
+        [placeholder]="'destination.placeholder' | transloco"
+      />
+      <div class="origin-row">
+        <span>{{
+          (manualOrigin() ? 'destination.startingStation' : 'destination.currentLocation')
+            | transloco
+        }}</span>
+        <button type="button" class="text-button" (click)="toggleOrigin()">
+          {{
+            (manualOrigin() ? 'destination.useLocation' : 'destination.chooseOrigin') | transloco
+          }}
+        </button>
+      </div>
+      @if (manualOrigin()) {
+        <label for="origin-query" class="visually-hidden">{{
+          'destination.startingStation' | transloco
+        }}</label>
+        <input
+          id="origin-query"
+          type="search"
+          autocomplete="off"
+          [value]="originQuery()"
+          (input)="queryChanged($event, 'origin')"
+          [placeholder]="'destination.originPlaceholder' | transloco"
+        />
+      }
+      @if (suggesting()) {
+        <p class="feedback" role="status">{{ 'search.searching' | transloco }}</p>
+      }
+      @if (suggestionError()) {
+        <p class="feedback error" role="status">{{ 'search.failed' | transloco }}</p>
+      }
+      @if (
+        !suggesting() &&
+        !suggestionError() &&
+        !suggestions().length &&
+        (activeField() === 'destination'
+          ? destinationQuery().trim().length >= 2 && !destination()
+          : originQuery().trim().length >= 2 && !origin())
+      ) {
+        <p class="feedback" role="status">{{ 'destination.noStations' | transloco }}</p>
+      }
+      @if (suggestions().length) {
+        <ul
+          class="suggestions"
+          [attr.aria-label]="
+            (activeField() === 'destination'
+              ? 'destination.destination'
+              : 'destination.startingStation'
+            ) | transloco
+          "
+        >
+          @for (station of suggestions(); track station.id) {
+            <li>
+              <button type="button" (click)="select(station)">{{ station.name }}</button>
+            </li>
+          }
+        </ul>
+      }
+      <button
+        class="search-button"
+        type="submit"
+        [disabled]="!destination() || (manualOrigin() && !origin()) || status() !== 'idle'"
+      >
+        {{
+          (status() === 'locating'
+            ? 'destination.locating'
+            : status() === 'loading'
+              ? 'destination.loading'
+              : 'destination.find'
+          ) | transloco
+        }}
+      </button>
+    </form>
+    @if (error(); as errorKey) {
+      <p class="feedback error" role="alert">{{ 'destination.' + errorKey | transloco }}</p>
+    }
+  </section>
+
+  @if (data.session(); as session) {
+    <section
+      class="results"
+      [attr.aria-label]="'destination.results' | transloco"
+      [attr.aria-busy]="status() === 'loading'"
+    >
+      <div class="results-heading">
+        <div>
+          <h2>{{ 'destination.results' | transloco }}</h2>
+          <p>{{ session.destination.name }}</p>
+        </div>
+        <button type="button" class="refresh" (click)="search()" [disabled]="status() !== 'idle'">
+          {{ 'destination.refresh' | transloco }}
+        </button>
+      </div>
+      <p class="updated">
+        {{ 'destination.updated' | transloco: { time: formatTime(session.updatedAt) } }}
+      </p>
+      @if (!session.departures.length) {
+        <p class="empty" role="status">{{ 'destination.empty' | transloco }}</p>
+      }
+      <ol class="timeline">
+        @for (departure of session.departures; track departure.id) {
+          <li class="departure">
+            <div class="departure-heading">
+              <div class="departure-time">
+                <strong>{{ formatTime(departure.departure) }}</strong>
+                <span>{{ formatDate(departure.departure) }}</span>
+                @if (delay(departure.departure, departure.scheduledDeparture) > 0) {
+                  <span class="delay"
+                    >+{{ delay(departure.departure, departure.scheduledDeparture) }}
+                    {{ 'detail.min' | transloco }}</span
+                  >
+                }
+              </div>
+              <div class="departure-station">
+                <h3>{{ departure.stationName }}</h3>
+                <div class="distance">
+                  @if (departure.distanceMeters !== null) {
+                    <span>{{
+                      'destination.away'
+                        | transloco: { distance: formatDistance(departure.distanceMeters) }
+                    }}</span>
+                  }
+                  @if (departure.walkingMinutes !== null && departure.walkingMinutes > 0) {
+                    <span>{{
+                      'destination.walkToStop' | transloco: { minutes: departure.walkingMinutes }
+                    }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+            <div class="departure-summary">
+              <app-line-badge
+                [label]="departure.line"
+                [mode]="departure.mode"
+                [badgePath]="departure.badge"
+              />
+              @if (departure.direction) {
+                <span class="direction"
+                  >{{ 'detail.to' | transloco }} {{ departure.direction }}</span
+                >
+              }
+              @if (departure.platform && departure.stationId) {
+                <a
+                  class="platform-link"
+                  [routerLink]="['/platform', departure.stationId]"
+                  [queryParams]="{ platform: departure.platform, station: departure.stationName }"
+                  [attr.aria-label]="
+                    'platformMap.show' | transloco: { platform: departure.platform }
+                  "
+                >
+                  {{ 'detail.plShort' | transloco }} {{ departure.platform }}
+                </a>
+              } @else if (departure.platform) {
+                <span>{{ 'detail.plShort' | transloco }} {{ departure.platform }}</span>
+              }
+            </div>
+            <div class="arrival-summary">
+              <strong>{{
+                'destination.arrives' | transloco: { time: formatTime(departure.arrival) }
+              }}</strong>
+              @if (formatDate(departure.arrival) !== formatDate(departure.departure)) {
+                <span>{{ formatDate(departure.arrival) }}</span>
+              }
+              <span>{{
+                (departure.transfers === 0
+                  ? 'destination.direct'
+                  : departure.transfers === 1
+                    ? 'destination.oneChange'
+                    : 'destination.changes'
+                ) | transloco: { count: departure.transfers }
+              }}</span>
+            </div>
+            <details>
+              <summary>{{ 'destination.journeyDetails' | transloco }}</summary>
+              <ol class="legs">
+                @for (leg of departure.legs; track $index) {
+                  <li>
+                    <div class="leg-heading">
+                      @if (leg.kind === 'ride') {
+                        <app-line-badge
+                          [label]="leg.line"
+                          [mode]="leg.mode"
+                          [badgePath]="leg.badge"
+                        />
+                      } @else {
+                        <strong>{{
+                          (leg.minutes !== null ? 'destination.walk' : 'destination.walkUnknown')
+                            | transloco: { minutes: leg.minutes }
+                        }}</strong>
+                      }
+                    </div>
+                    <p>
+                      <span class="leg-time">{{
+                        leg.departure !== null ? formatTime(leg.departure) : ''
+                      }}</span>
+                      {{ leg.from }}
+                    </p>
+                    <p>
+                      <span class="leg-time">{{
+                        leg.arrival !== null ? formatTime(leg.arrival) : ''
+                      }}</span>
+                      {{ leg.to }}
+                    </p>
+                    @if (leg.kind === 'ride' && leg.platform && leg.stationId) {
+                      <a
+                        class="platform-link"
+                        [routerLink]="['/platform', leg.stationId]"
+                        [queryParams]="{ platform: leg.platform, station: leg.from }"
+                      >
+                        {{ 'detail.platform' | transloco }} {{ leg.platform }}
+                      </a>
+                    }
+                  </li>
+                }
+              </ol>
+            </details>
+          </li>
+        }
+      </ol>
+      <p class="note">{{ 'destination.note' | transloco }}</p>
+      <p class="note">{{ 'destination.distanceNote' | transloco }}</p>
+      <a
+        class="source"
+        href="https://opentransportdata.swiss/"
+        target="_blank"
+        rel="noopener noreferrer"
+        >{{ 'destination.source' | transloco }}</a
+      >
+    </section>
+  }
+</main>

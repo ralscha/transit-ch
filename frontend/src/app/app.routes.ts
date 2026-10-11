@@ -6,6 +6,10 @@ import { DetailComponent } from './detail/detail';
 export const routes: Routes = [
   { path: '', component: StationboardComponent },
   { path: 'search', component: SearchComponent },
+  {
+    path: 'destination',
+    loadComponent: () => import('./destination/destination').then((m) => m.DestinationComponent),
+  },
   { path: 'detail/:id', component: DetailComponent },
   {
     path: 'platform/:stationId',

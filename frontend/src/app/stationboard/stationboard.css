@@ -68,6 +68,23 @@
   color: black;
   overscroll-behavior-y: contain;
 }
+.destination-search-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  flex-shrink: 0;
+  padding: 8px 12px;
+  color: #b0000b;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+.destination-search-link:focus-visible {
+  outline: 2px solid #0068b0;
+  outline-offset: -3px;
+}
 .content.is-pulling {
   background: linear-gradient(180deg, #f6f6f6 0, #ffffff 96px);
 }

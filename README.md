@@ -6,6 +6,10 @@ Transit CH is an Angular 22 PWA for Swiss public transport stationboards. The fr
 
 Platform numbers open a MapLibre map with the Swisstopo vector basemap. Only this feature uses the Go backend, which looks up published boarding-platform positions in a custom immutable snapshot. Station search and stationboards continue to use the public transport API directly.
 
+The **Find departures to a destination** link opens a destination search. Choose a destination stop and use your current location, or select a starting station. The app shows up to five vehicle departures in one chronological list across nearby boarding stops, including journeys with transfers. All five can leave from the same station. Cards show walking time, arrival time, changes, platform links and the full sequence of journey legs.
+
+The [Transport API connections endpoint](https://transport.opendata.ch/docs.html#connections) accepts GPS coordinates and plans the walks to boarding stops as well as transfers. It considers walking routes of up to 20 minutes. The app requests 16 journey options, deduplicates alternatives that share the first vehicle departure, and sorts by that vehicle's predicted departure time, falling back to the timetable. These are the journey planner's available options; its optimization can omit slower alternatives, so this is not an exhaustive scan of every departure at every nearby stop. Distances are straight-line estimates; walking times come from the planner. Walking-only journeys are excluded. Results refresh every minute while the page is visible, and identical searches are reused for 30 seconds. Location and results remain only in application memory, allowing a return from the platform map without losing the search.
+
 ## Frontend
 
 Run from the `frontend` directory:
@@ -21,6 +25,7 @@ Useful commands:
 
 ```bash
 npm run lint
+npm test
 npm run build
 npm run check
 npm run format
@@ -121,18 +126,20 @@ task build-frontend
 
 ## Deployment
 
+For a complete clone, build and installation walkthrough, including systemd setup, Caddy, logs and later updates, see [Install on Debian or Ubuntu](deploy/README.md).
+
 `Caddyfile` serves the Angular build from `/opt/transit-ch/dist/transit-ch/browser`, enables precompressed assets, applies security headers, routes SPA fallback requests to `index.html`, and reverse-proxies `/traffic-point-v2/*` to the Go backend on port `34341`.
 
 The API and SPA use separate Caddy handlers so a platform lookup cannot be rewritten to `index.html`. Deploy the backend executable and generated snapshot together, set its working directory or `PLATFORM_DB`, and run it alongside Caddy. A missing backend leaves the stationboard usable and shows a retryable error when opening a platform map.
 
-Caddy caches hashed Angular JS/CSS bundles for one year. HTML, translations, badges, and MapLibre worker files revalidate on each request; Angular service-worker scripts and `ngsw.json` use `no-store`. Cache headers are applied after the SPA rewrite, so a missing bundle cannot leave `index.html` cached under an immutable asset URL. Copy the contents of `frontend/dist/transit-ch/browser` to `/opt/transit-ch/dist/transit-ch/browser` on the server, keeping the precompressed sidecar files. The platform snapshot stays in `/var/lib/transit-ch`, outside the public web root.
+Caddy caches hashed Angular JS/CSS bundles for one year. HTML, translations, badges, and MapLibre worker files revalidate on each request; Angular service-worker scripts and `ngsw.json` use `no-store`. Cache headers are applied after the SPA rewrite, so a missing bundle cannot leave `index.html` cached under an immutable asset URL. Copy the contents of `frontend/dist/transit-ch/browser` to `/opt/transit-ch/dist/transit-ch/browser` on the server, keeping the precompressed sidecar files. The platform snapshot is `/opt/transit-ch/platforms.bin`, alongside the executables and outside the public web root.
 
 ### systemd
 
 The units in [`deploy/systemd`](deploy/systemd) run the backend and refresh its data:
 
-- `transit-ch.service` runs `/opt/transit-ch/transit-ch-backend` as the `transit-ch` system user, serves port `34341`, and reads `/var/lib/transit-ch/platforms.bin`. It restarts after failures and allows graceful shutdown.
-- `transit-ch-import.service` runs the importer as the same user. systemd creates its writable state directory under `/var/lib`; the backend has a read-only filesystem. Only a successful import triggers a privileged `systemctl try-restart transit-ch.service` command, so failed imports keep the current backend running and an intentionally stopped backend stays stopped.
+- `transit-ch.service` runs `/opt/transit-ch/transit-ch-backend` as the `transit-ch` system user, serves port `34341`, and reads `/opt/transit-ch/platforms.bin`. It restarts after failures and allows graceful shutdown.
+- `transit-ch-import.service` runs the importer as the same user and writes `/opt/transit-ch/platforms.bin`. Its sandbox permits writes under `/opt/transit-ch`; the backend has a read-only filesystem. Install that directory as `root:transit-ch` with mode `1775`, allowing atomic snapshot replacement while the sticky bit protects the root-owned executables from replacement by the service account. Only a successful import triggers a privileged `systemctl try-restart transit-ch.service` command, so failed imports keep the current backend running and an intentionally stopped backend stays stopped.
 - `transit-ch-import.timer` runs daily at 01:30 Europe/Zurich, including daylight-saving changes. It catches up once when activated after a missed run. The importer service is not enabled separately.
 
 These are system units for Linux with systemd 240 or newer. Install CA certificates and timezone data on the server so HTTPS downloads and the Zurich calendar work. Build the executables on Linux from the repository root (or cross-compile them for the server's OS and architecture):
@@ -145,8 +152,8 @@ go build -o transit-ch-importer ./importer
 For the first installation, run the following on the Linux server from the directory containing the built executables and `deploy/systemd`. Create the account once; skip `useradd` if it already exists.
 
 ```bash
-sudo useradd --system --user-group --no-create-home --home-dir /var/lib/transit-ch --shell /usr/sbin/nologin transit-ch
-sudo install -d -o root -g root -m 0755 /opt/transit-ch
+sudo useradd --system --user-group --no-create-home --home-dir /opt/transit-ch --shell /usr/sbin/nologin transit-ch
+sudo install -d -o root -g transit-ch -m 1775 /opt/transit-ch
 sudo install -o root -g root -m 0755 transit-ch-backend transit-ch-importer /opt/transit-ch/
 sudo install -o root -g root -m 0644 deploy/systemd/transit-ch.service deploy/systemd/transit-ch-import.service deploy/systemd/transit-ch-import.timer /etc/systemd/system/
 sudo systemd-analyze verify /etc/systemd/system/transit-ch.service /etc/systemd/system/transit-ch-import.service /etc/systemd/system/transit-ch-import.timer
@@ -154,7 +161,7 @@ sudo systemctl daemon-reload
 sudo systemctl start transit-ch-import.service
 ```
 
-The initial import must succeed before starting the backend. It creates the snapshot and leaves the backend stopped. Then enable startup at boot and the refresh timer:
+The initial import must succeed before starting the backend. It creates the snapshot and leaves the backend stopped. If you already installed the earlier `/var/lib/transit-ch` setup, follow the [migration notes](deploy/README.md#install-systemd-units) to update any existing backend override. Then enable startup at boot and the refresh timer:
 
 ```bash
 sudo systemctl enable --now transit-ch.service transit-ch-import.timer

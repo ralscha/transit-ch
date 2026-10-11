@@ -22,7 +22,7 @@ transit-ch.rasc.ch {
 			header Cache-Control "public, max-age=0, must-revalidate"
 
 			# Only Angular bundles with content hashes are immutable.
-			@hashedBundles path_regexp hashedBundles ^/[^/]+-[A-Z0-9]{8}\.(js|css)$
+			@hashedBundles path_regexp hashedBundles ^/[^/]+-[A-Za-z0-9_-]{8}\.(js|css)$
 			header @hashedBundles Cache-Control "public, max-age=31536000, immutable"
 
 			@sw path /ngsw.json /ngsw-worker.js /safety-worker.js /worker-basic.min.js

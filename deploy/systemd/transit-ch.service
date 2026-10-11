@@ -9,7 +9,7 @@ Type=exec
 User=transit-ch
 Group=transit-ch
 WorkingDirectory=/opt/transit-ch
-Environment=PLATFORM_DB=/var/lib/transit-ch/platforms.bin
+Environment=PLATFORM_DB=/opt/transit-ch/platforms.bin
 ExecStart=/opt/transit-ch/transit-ch-backend -port 34341
 Restart=on-failure
 RestartSec=5s
