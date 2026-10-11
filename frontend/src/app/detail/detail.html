@@ -16,8 +16,11 @@
       </div>
       <h2 class="line-heading">
         <span class="line-heading__label">
-          <app-transport-mode-icon [mode]="selectedEntry.transportMode" />
-          <span>{{ selectedEntry.lineLabel }}</span>
+          <app-line-badge
+            [label]="selectedEntry.lineLabel"
+            [mode]="selectedEntry.transportMode"
+            [badgePath]="selectedEntry.lineBadgePath"
+          />
         </span>
         <span>{{ 'detail.to' | transloco }} {{ selectedEntry.to }}</span>
       </h2>

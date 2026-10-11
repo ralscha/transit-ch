@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Component, Service, inject, input } from '@angular/core';
 import { interval, map, Observable, of, startWith } from 'rxjs';
+import { getLineBadgePath } from './line-badge';
 
 interface LocationsResponse {
   stations: LocationDto[];
@@ -73,6 +74,7 @@ export interface StationboardEntry {
   delayMinutes: number;
   transportMode: TransportMode;
   lineLabel: string;
+  lineBadgePath: string | null;
   routeStops: RouteStop[];
 }
 
@@ -268,6 +270,7 @@ export class TransportApiService {
             delayMinutes,
             transportMode: this.#resolveTransportMode(entry.category),
             lineLabel: this.#buildLineLabel(entry),
+            lineBadgePath: getLineBadgePath(entry.category, entry.number),
             routeStops,
           };
         }),

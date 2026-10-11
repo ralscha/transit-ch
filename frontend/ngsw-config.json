@@ -17,6 +17,14 @@
       }
     },
     {
+      "name": "line-badges",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/icons/sbb-lines/*.svg"]
+      }
+    },
+    {
       "name": "assets",
       "installMode": "prefetch",
       "updateMode": "prefetch",

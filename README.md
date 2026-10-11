@@ -26,6 +26,12 @@ npm run format
 
 The production build writes to `frontend/dist/transit-ch/browser` and the `postbuild` step precompresses assets with gzip, Brotli, and zstd for Caddy.
 
+### Timetable line badges
+
+The stationboard and journey details use official SBB badges for IC, IR, S, SN, RE and R lines 1-99, plus category-only badges when the API supplies no number. The SVGs are bundled in `frontend/public/icons/sbb-lines`, preserve the original artwork, and use the complete line label as alternative text. Unknown services, unmatched numbers (including train identifiers), and failed image loads keep a text label and transport-mode icon. The service worker caches badges on demand and updates previously cached badges with the app.
+
+Asset provenance, the upstream license, and links to SBB's usage terms are recorded in [SOURCE.txt](frontend/public/icons/sbb-lines/SOURCE.txt). SBB's brand terms include Swiss public transport projects and restrict commercial use.
+
 ## Backend
 
 The Go backend listens on port `34341` by default.

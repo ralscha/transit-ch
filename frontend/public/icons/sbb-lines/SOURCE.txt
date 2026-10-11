@@ -1,0 +1,22 @@
+Official SBB timetable product-brand badges
+
+Source: https://github.com/sbb-design-systems/sbb-icons
+Revision: d3bd7919d7cfe35db1eebf6b17f43653bc9d0ce1
+Retrieved: 2026-10-11
+Original files: icons/*.svg at the revision above, copied without modification.
+The upstream Apache-2.0 license is included in LICENSE.
+
+Selection: IC, IR, S, SN, RE and R badges for lines 1-99; category-only
+badges for those services plus EC, EN, ICE, NJ, PE, RJ, RJX, TGV, TER and RB.
+All selected SVGs have a 59 x 20 viewBox. Keep colors and proportions intact.
+
+Timetable asset guidance:
+https://digital.sbb.ch/de/foundation/assets/fpl/
+Brand usage terms:
+https://digital.sbb.ch/de/foundation/brand/copyrights/
+
+The brand terms include projects related to Swiss public transport, restrict
+commercial use, and prohibit changes to the artwork or unrelated uses.
+The timetable guidance permits proportional scaling but not recoloring these
+product-brand icons. Other uses require SBB approval. The upstream software
+license does not grant trademark rights or imply SBB endorsement.

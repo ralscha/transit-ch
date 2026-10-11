@@ -5,11 +5,11 @@ import { RouterLink } from '@angular/router';
 import { filter, fromEvent, interval, merge } from 'rxjs';
 import { StateService } from '../state.service';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { TransportModeIconComponent } from '../transport-api.service';
+import { LineBadgeComponent } from '../line-badge.component';
 
 @Component({
   selector: 'app-stationboard',
-  imports: [RouterLink, TranslocoPipe, TransportModeIconComponent],
+  imports: [RouterLink, TranslocoPipe, LineBadgeComponent],
   templateUrl: './stationboard.html',
   styleUrls: ['./stationboard.css'],
 })

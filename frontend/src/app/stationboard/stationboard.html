@@ -93,8 +93,11 @@
         @for (entry of state.stationboard(); track entry.id) {
           <a class="row" [routerLink]="['/detail', entry.id]">
             <span class="line-cell">
-              <app-transport-mode-icon [mode]="entry.transportMode" />
-              <span class="line">{{ entry.lineLabel }}</span>
+              <app-line-badge
+                [label]="entry.lineLabel"
+                [mode]="entry.transportMode"
+                [badgePath]="entry.lineBadgePath"
+              />
             </span>
             <span class="to">{{ entry.to }}</span>
             <span class="time">

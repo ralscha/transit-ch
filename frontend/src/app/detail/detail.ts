@@ -3,12 +3,12 @@ import { ActivatedRoute } from '@angular/router';
 import { StateService } from '../state.service';
 import { Location } from '@angular/common';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { TransportModeIconComponent } from '../transport-api.service';
+import { LineBadgeComponent } from '../line-badge.component';
 
 @Component({
   selector: 'app-detail',
   standalone: true,
-  imports: [TranslocoPipe, TransportModeIconComponent],
+  imports: [TranslocoPipe, LineBadgeComponent],
   templateUrl: './detail.html',
   styleUrls: ['./detail.css'],
 })
