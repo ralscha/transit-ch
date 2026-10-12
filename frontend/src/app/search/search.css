@@ -1,7 +1,12 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
 .search-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
 }
 .top-bar {
@@ -9,13 +14,16 @@
   align-items: center;
   gap: 8px;
   padding: 0 12px;
-  height: 50px;
+  height: 56px;
   background: #e3000f;
   color: white;
   border-bottom: 2px solid #000;
   flex-shrink: 0;
 }
 .btn-back {
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
   background: transparent;
   color: white;
   border: none;
@@ -28,6 +36,7 @@
 }
 .search-bar {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   height: 100%;
@@ -44,9 +53,15 @@
 }
 .content {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+}
+.btn-back:focus-visible,
+.search-bar input:focus-visible {
+  outline: 2px solid #0068b0;
+  outline-offset: -2px;
 }
 
 .msg {

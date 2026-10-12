@@ -2,6 +2,8 @@
 
 Clone and build as your normal SSH user, then install the output under `/opt/transit-ch`. Caddy serves the compiled frontend; systemd runs the Go backend and the daily data importer. Node.js is only needed for building, so the frontend does not need a separate service.
 
+For an existing installation, use `task install-update` as described in [Updating to a new version](../README.md#updating-to-a-new-version).
+
 ## Requirements
 
 Use a Linux server with systemd 240 or newer, `sudo`, Git, curl, rsync, CA certificates and timezone data. Install [Go](https://go.dev/doc/install) 1.27.1 or newer, as required by the root `go.mod`, and [Node.js](https://nodejs.org/en/download) 24 LTS, at least 24.15.0, with npm. The repository's Angular CLI also accepts Node 22.22.3+ in the 22.x series or Node 26+.

@@ -1,5 +1,4 @@
 <header class="top-bar">
-  <a routerLink="/" class="back" [attr.aria-label]="'platformMap.back' | transloco">&#8592;</a>
   <h1>{{ 'destination.title' | transloco }}</h1>
 </header>
 <main>
@@ -159,7 +158,11 @@
                 <a
                   class="platform-link"
                   [routerLink]="['/platform', departure.stationId]"
-                  [queryParams]="{ platform: departure.platform, station: departure.stationName }"
+                  [queryParams]="{
+                    platform: departure.platform,
+                    station: departure.stationName,
+                    section: 'destination',
+                  }"
                   [attr.aria-label]="
                     'platformMap.show' | transloco: { platform: departure.platform }
                   "
@@ -221,7 +224,11 @@
                       <a
                         class="platform-link"
                         [routerLink]="['/platform', leg.stationId]"
-                        [queryParams]="{ platform: leg.platform, station: leg.from }"
+                        [queryParams]="{
+                          platform: leg.platform,
+                          station: leg.from,
+                          section: 'destination',
+                        }"
                       >
                         {{ 'detail.platform' | transloco }} {{ leg.platform }}
                       </a>

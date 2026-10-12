@@ -108,10 +108,6 @@ export class StationboardComponent {
     this.#resetPull();
   }
 
-  toggleBoardMode() {
-    this.state.toggleBoardMode();
-  }
-
   setActiveLanguage(event: Event) {
     const select = event.target;
 

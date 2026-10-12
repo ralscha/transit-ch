@@ -1,6 +1,8 @@
 <header class="top-bar">
   <div class="left-action">
-    <button class="btn-back" (click)="goBack()">&#8592;</button>
+    <button class="btn-back" (click)="goBack()" [attr.aria-label]="'platformMap.back' | transloco">
+      &#8592;
+    </button>
   </div>
   <div class="title">{{ 'detail.title' | transloco }}</div>
   <div class="right-action"></div>
@@ -39,6 +41,7 @@
               [queryParams]="{
                 platform: selectedEntry.platform,
                 station: selectedEntry.stationName,
+                board: state.boardMode(),
               }"
               [attr.aria-label]="
                 'platformMap.show' | transloco: { platform: selectedEntry.platform }
@@ -82,7 +85,11 @@
                   <a
                     class="platform-link"
                     [routerLink]="['/platform', stop.stationId]"
-                    [queryParams]="{ platform: stop.platformLabel, station: stop.stationName }"
+                    [queryParams]="{
+                      platform: stop.platformLabel,
+                      station: stop.stationName,
+                      board: state.boardMode(),
+                    }"
                     [attr.aria-label]="
                       'platformMap.show' | transloco: { platform: stop.platformLabel }
                     "

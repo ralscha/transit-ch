@@ -1,7 +1,7 @@
 :host {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
   background: #fff;
 }
@@ -10,7 +10,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 8px;
-  height: 50px;
+  min-height: 56px;
   background: #e3000f;
   color: white;
   border-bottom: 2px solid #000;
@@ -18,11 +18,14 @@
 }
 .left-action,
 .right-action {
-  width: 40px;
+  width: 44px;
   display: flex;
   justify-content: center;
 }
 .btn-back {
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
   background: transparent;
   color: white;
   border: none;

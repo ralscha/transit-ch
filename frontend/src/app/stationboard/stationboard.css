@@ -1,7 +1,7 @@
 :host {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
 }
 .top-bar {
@@ -9,7 +9,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 12px;
-  height: 50px;
+  min-height: 56px;
+  gap: 8px;
   background: #e3000f;
   color: white;
   border-bottom: 2px solid #000;
@@ -23,27 +24,13 @@
   display: flex;
   align-items: center;
 }
-.logo-button {
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-weight: inherit;
-  padding: 6px 8px;
-  margin-left: -8px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.logo-button:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
-}
 .top-bar-spacer {
   flex: 1;
 }
 .language-select {
-  margin-right: 1rem;
-  padding: 0.2rem;
+  min-height: 44px;
+  padding: 6px;
+  font: inherit;
   background: transparent;
   color: white;
   border: none;
@@ -53,37 +40,59 @@
   color: black;
 }
 .search-icon {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
   background: none;
   border: none;
   color: white;
-  font-size: 1.25rem;
   cursor: pointer;
   padding: 8px;
   margin-right: -8px;
 }
+.search-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.search-icon:focus-visible,
+.language-select:focus-visible {
+  outline: 2px solid white;
+  outline-offset: -2px;
+}
 .content {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   background: white;
   color: black;
   overscroll-behavior-y: contain;
 }
-.destination-search-link {
-  display: flex;
+.empty-board {
+  padding: 32px 20px;
+  text-align: center;
+}
+.empty-board p {
+  margin: 0 0 20px;
+  color: #555;
+}
+.empty-board a {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
   min-height: 44px;
-  flex-shrink: 0;
-  padding: 8px 12px;
-  color: #b0000b;
-  background: #fff;
-  border-bottom: 1px solid #ddd;
-  font-size: 0.9rem;
+  padding: 10px 20px;
+  border-radius: 6px;
+  background: #d9000e;
+  color: white;
+  font-weight: bold;
   text-decoration: none;
 }
-.destination-search-link:focus-visible {
+.empty-board a:focus-visible {
   outline: 2px solid #0068b0;
-  outline-offset: -3px;
+  outline-offset: 3px;
 }
 .content.is-pulling {
   background: linear-gradient(180deg, #f6f6f6 0, #ffffff 96px);
@@ -184,6 +193,8 @@
 .station-header {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
   background: #eee;
   padding: 6px 8px;
   font-weight: bold;
@@ -192,8 +203,11 @@
 .station-header h2 {
   margin: 0;
   font-size: 1rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .station-header span {
+  flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
 .board-table {

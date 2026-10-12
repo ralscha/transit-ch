@@ -5,6 +5,12 @@
     "fr": "FR",
     "it": "IT"
   },
+  "navigation": {
+    "label": "Navigation principale",
+    "destination": "Destination",
+    "language": "Langue",
+    "searchStation": "Chercher une gare"
+  },
   "search": {
     "placeholder": "Rechercher une gare...",
     "searching": "Recherche...",
@@ -20,7 +26,7 @@
     "pullToRefresh": "Tirer pour actualiser",
     "showDepartures": "Afficher les départs",
     "showArrivals": "Afficher les arrivées",
-    "selectStation": "Sélectionnez une gare via l'icône de recherche.",
+    "selectStation": "Choisissez une gare pour voir les départs et les arrivées.",
     "loading": "Chargement...",
     "noDepartures": "Aucun départ disponible.",
     "noArrivals": "Aucune arrivée disponible.",

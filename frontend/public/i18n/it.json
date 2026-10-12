@@ -5,6 +5,12 @@
     "fr": "FR",
     "it": "IT"
   },
+  "navigation": {
+    "label": "Navigazione principale",
+    "destination": "Destinazione",
+    "language": "Lingua",
+    "searchStation": "Cerca una stazione"
+  },
   "search": {
     "placeholder": "Cerca stazione...",
     "searching": "Ricerca...",
@@ -20,7 +26,7 @@
     "pullToRefresh": "Trascina per aggiornare",
     "showDepartures": "Mostra partenze",
     "showArrivals": "Mostra arrivi",
-    "selectStation": "Seleziona una stazione dall'icona di ricerca.",
+    "selectStation": "Scegli una stazione per vedere le partenze e gli arrivi.",
     "loading": "Caricamento...",
     "noDepartures": "Nessuna partenza disponibile.",
     "noArrivals": "Nessun arrivo disponibile.",

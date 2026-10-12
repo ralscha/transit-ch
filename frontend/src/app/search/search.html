@@ -1,6 +1,8 @@
 <div class="search-page">
   <header class="top-bar">
-    <button class="btn-back" (click)="goBack()">&#8592;</button>
+    <button class="btn-back" (click)="goBack()" [attr.aria-label]="'platformMap.back' | transloco">
+      &#8592;
+    </button>
     <form class="search-bar" (submit)="$event.preventDefault()" novalidate>
       <input
         type="text"

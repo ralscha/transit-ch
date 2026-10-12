@@ -4,9 +4,11 @@ https://transit-ch.rasc.ch
 
 Transit CH is an Angular 22 PWA for Swiss public transport stationboards. The frontend calls the public `transport.opendata.ch` API for station search and departure/arrival boards, supports English, German, French, and Italian via Transloco, and includes service-worker update prompts.
 
-Platform numbers open a MapLibre map with the Swisstopo vector basemap. Only this feature uses the Go backend, which looks up published boarding-platform positions in a custom immutable snapshot. Station search and stationboards continue to use the public transport API directly.
+Platform numbers open a MapLibre map with the Swisstopo vector basemap. This feature uses the Go backend, which looks up published boarding-platform positions in a custom immutable snapshot. Station search and stationboards use the public transport API directly.
 
-The **Find departures to a destination** link opens a destination search. Choose a destination stop and use your current location, or select a starting station. The app shows up to five vehicle departures in one chronological list across nearby boarding stops, including journeys with transfers. All five can leave from the same station. Cards show walking time, arrival time, changes, platform links and the full sequence of journey legs.
+The primary menu provides **Departures**, **Arrivals**, and **Destination** (German: **Abfahrten**, **Ankünfte**, **Ziel**) in a bottom bar on phones and a side rail on wider screens. Departures and arrivals share the selected station. The board mode is included in navigation URLs so browser Back restores the correct view.
+
+**Destination** opens a destination search. Choose a destination stop and use your current location, or select a starting station. The app shows up to five vehicle departures in one chronological list across nearby boarding stops, including journeys with transfers. All five can leave from the same station. Cards show walking time, arrival time, changes, platform links and the full sequence of journey legs.
 
 The [Transport API connections endpoint](https://transport.opendata.ch/docs.html#connections) accepts GPS coordinates and plans the walks to boarding stops as well as transfers. It considers walking routes of up to 20 minutes. The app requests 16 journey options, deduplicates alternatives that share the first vehicle departure, and sorts by that vehicle's predicted departure time, falling back to the timetable. These are the journey planner's available options; its optimization can omit slower alternatives, so this is not an exhaustive scan of every departure at every nearby stop. Distances are straight-line estimates; walking times come from the planner. Walking-only journeys are excluded. Results refresh every minute while the page is visible, and identical searches are reused for 30 seconds. Location and results remain only in application memory, allowing a return from the platform map without losing the search.
 
@@ -122,9 +124,13 @@ task test
 task import-platforms
 task benchmark-storage
 task build-frontend
+task build-update
+task install-update
 ```
 
 `task test` runs backend, importer and storage tests. These cover exact and compound platform lookups, unknown positions, validity filtering, ambiguity, malformed CSVs, snapshot corruption, deterministic output, replacement safety and concurrent readers. Frontend verification is covered by `npm run check` or `task build-frontend`. Run `go test ./internal/platformstore -fuzz FuzzDecode -fuzztime 10s` to fuzz snapshot validation. The Go race detector additionally requires a C compiler and CGO support.
+
+`task build-update` checks and builds the Linux release artifacts. `task install-update` runs that build and updates an existing server installation. See [Updating to a new version](#updating-to-a-new-version) for usage.
 
 ## Deployment
 
@@ -182,63 +188,38 @@ The success-only restart hook and persistent calendar behavior follow the [syste
 
 ### Updating to a new version
 
-Run these commands on the Debian or Ubuntu server as your normal SSH user. They assume the source checkout is in `~/src/transit-ch` and the application is installed under `/opt/transit-ch`, as described in the installation guide. Adjust the checkout path if needed.
-
-First pull the latest code, build both Go programs, and check and build the frontend. The running application stays available during this step. The build and installation blocks run in subshells that stop on errors.
+Run these commands on the Debian or Ubuntu server as your normal SSH user, with [Task v3](https://taskfile.dev/docs/installation) and the tools listed in the [installation guide](deploy/README.md#requirements) installed. They assume the source checkout is in `~/src/transit-ch` and the application is installed under `/opt/transit-ch` with its systemd units and platform snapshot. Adjust the checkout path if needed.
 
 ```bash
-(
-  set -e
-  cd ~/src/transit-ch
-  git pull --ff-only
-  mkdir -p frontend/tmp/server-build
-  go test ./...
-  go build -trimpath -o frontend/tmp/server-build/transit-ch-backend ./backend
-  go build -trimpath -o frontend/tmp/server-build/transit-ch-importer ./importer
-  cd frontend
-  npm install --include=dev
-  npm run check
-)
+cd ~/src/transit-ch
+git pull --ff-only && task install-update
 ```
 
-Continue only after the build succeeds, including the compression step. The installation below briefly stops the backend and any running data import while replacing the executables. It keeps `/opt/transit-ch/platforms.bin` and the service account in place.
+`task install-update` performs these steps in order:
 
-A normal application update does not require another import. If a release changes the snapshot format, insert `sudo systemctl start transit-ch-import.service` after `daemon-reload` and before starting the backend in the block below.
+1. Runs `task build-update`: Go tests, both Go builds with `-trimpath`, frontend dependency installation, and `npm run check` (tests, lint, production build and asset compression).
+2. Requests sudo access and validates the systemd unit files.
+3. Stops the import timer, any running import, and the backend; installs the executables and systemd units; and reloads systemd.
+4. Copies frontend assets, then publishes `index.html` and `ngsw.json`, including their compressed sidecar files.
+5. Starts the backend and import timer and displays their status.
+
+The application stays available during the build, including asset compression, which can take several minutes. Installation starts only after the checks and build succeed. Commands stop on error. The task keeps `/opt/transit-ch/platforms.bin`, the service account, and existing hashed frontend bundles used by open browser tabs.
+
+To check and build without installing:
 
 ```bash
-(
-  set -e
-  cd ~/src/transit-ch
-  sudo systemctl stop transit-ch-import.timer transit-ch-import.service
-  sudo systemctl stop transit-ch.service
-
-  sudo install -o root -g root -m 0755 \
-    frontend/tmp/server-build/transit-ch-backend \
-    frontend/tmp/server-build/transit-ch-importer /opt/transit-ch/
-  sudo install -o root -g root -m 0644 \
-    deploy/systemd/transit-ch.service \
-    deploy/systemd/transit-ch-import.service \
-    deploy/systemd/transit-ch-import.timer /etc/systemd/system/
-  sudo systemd-analyze verify \
-    /etc/systemd/system/transit-ch.service \
-    /etc/systemd/system/transit-ch-import.service \
-    /etc/systemd/system/transit-ch-import.timer
-  sudo systemctl daemon-reload
-
-  # Copy assets before publishing the new app entry point and PWA manifest.
-  sudo rsync -a --chown=root:root --chmod=D755,F644 \
-    --exclude='/index.html*' --exclude='/ngsw.json*' \
-    frontend/dist/transit-ch/browser/ /opt/transit-ch/dist/transit-ch/browser/
-  sudo rsync -a --chown=root:root --chmod=D755,F644 \
-    --include='/index.html*' --include='/ngsw.json*' --exclude='*' \
-    frontend/dist/transit-ch/browser/ /opt/transit-ch/dist/transit-ch/browser/
-
-  sudo systemctl start transit-ch.service
-  sudo systemctl start transit-ch-import.timer
-)
+task build-update
 ```
 
-Both copies include the compressed sidecar files. They retain existing hashed bundles so open browser tabs can still load their assets. The daily timer continues refreshing platform data.
+The Go binaries are written to `frontend/tmp/server-build/` and the frontend to `frontend/dist/transit-ch/browser/`. `task install-update` always runs the build itself, so running `task build-update` first is optional.
+
+To download and import a fresh platform snapshot during installation, before starting the backend:
+
+```bash
+task install-update REFRESH_PLATFORMS=true
+```
+
+The default is `REFRESH_PLATFORMS=false`, which keeps the installed snapshot. Use `true` when the snapshot needs refreshing or its format must match the built executables.
 
 Frontend files are served immediately without a Caddy reload. If the release also changes `Caddyfile`, apply those changes to `/etc/caddy/Caddyfile`, keeping your configured hostname, then validate and reload:
 

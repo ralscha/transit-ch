@@ -89,7 +89,7 @@ export class SearchComponent {
   }
 
   goBack() {
-    this.router.navigate(['/']);
+    this.router.navigate(['/'], { queryParams: { board: this.state.boardMode() } });
   }
 
   updateQuery(event: Event) {

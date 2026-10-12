@@ -28,11 +28,8 @@ export class StateService {
 
   selectStation(station: StationSearchResult) {
     this.selectedStation.set(station);
-    this.#loadStationboard({ navigateHome: true });
-  }
-
-  toggleBoardMode() {
-    this.setBoardMode(this.boardMode() === 'departure' ? 'arrival' : 'departure');
+    this.#router.navigate(['/'], { queryParams: { board: this.boardMode() } });
+    this.#loadStationboard();
   }
 
   setBoardMode(mode: BoardType) {
@@ -48,7 +45,7 @@ export class StateService {
     return this.#loadStationboard({ preserveBoardOnError: true });
   }
 
-  #loadStationboard(options?: { navigateHome?: boolean; preserveBoardOnError?: boolean }) {
+  #loadStationboard(options?: { preserveBoardOnError?: boolean }) {
     const station = this.selectedStation();
     const boardMode = this.boardMode();
 
@@ -76,10 +73,6 @@ export class StateService {
         this.stationboard.set(entries);
         this.isLoadingBoard.set(false);
         this.isRefreshingBoard.set(false);
-
-        if (options?.navigateHome) {
-          this.#router.navigate(['/']);
-        }
       },
       error: () => {
         if (requestId !== this.#loadRequestId) {
@@ -95,10 +88,6 @@ export class StateService {
 
         this.isLoadingBoard.set(false);
         this.isRefreshingBoard.set(false);
-
-        if (options?.navigateHome) {
-          this.#router.navigate(['/']);
-        }
       },
     });
   }

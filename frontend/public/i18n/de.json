@@ -5,6 +5,12 @@
     "fr": "FR",
     "it": "IT"
   },
+  "navigation": {
+    "label": "Hauptnavigation",
+    "destination": "Ziel",
+    "language": "Sprache",
+    "searchStation": "Bahnhof suchen"
+  },
   "search": {
     "placeholder": "Bahnhof suchen...",
     "searching": "Wird gesucht...",
@@ -20,7 +26,7 @@
     "pullToRefresh": "Ziehen zum Aktualisieren",
     "showDepartures": "Abfahrten anzeigen",
     "showArrivals": "Ankünfte anzeigen",
-    "selectStation": "Wählen Sie einen Bahnhof über das Suchsymbol.",
+    "selectStation": "Wähle einen Bahnhof für die Abfahrten und Ankünfte.",
     "loading": "Wird geladen...",
     "noDepartures": "Keine Abfahrten verfügbar.",
     "noArrivals": "Keine Ankünfte verfügbar.",

@@ -1,41 +1,36 @@
 <header class="top-bar">
   <h1 class="logo">
-    <button
-      class="logo-button"
-      type="button"
-      (click)="toggleBoardMode()"
-      [attr.aria-label]="
-        (state.boardMode() === 'arrival'
-          ? 'stationboard.showDepartures'
-          : 'stationboard.showArrivals'
-        ) | transloco
-      "
-      [attr.aria-pressed]="state.boardMode() === 'arrival'"
-    >
-      {{
-        (state.boardMode() === 'arrival'
-          ? 'stationboard.titleArrivals'
-          : 'stationboard.titleDepartures'
-        ) | transloco
-      }}
-    </button>
+    {{
+      (state.boardMode() === 'arrival'
+        ? 'stationboard.titleArrivals'
+        : 'stationboard.titleDepartures'
+      ) | transloco
+    }}
   </h1>
   <div class="top-bar-spacer"></div>
   <select
     class="language-select"
     (change)="setActiveLanguage($event)"
     [value]="translocoService.getActiveLang()"
+    [attr.aria-label]="'navigation.language' | transloco"
   >
     <option value="en">{{ 'lang.en' | transloco }}</option>
     <option value="de">{{ 'lang.de' | transloco }}</option>
     <option value="fr">{{ 'lang.fr' | transloco }}</option>
     <option value="it">{{ 'lang.it' | transloco }}</option>
   </select>
-  <button class="search-icon" routerLink="/search" aria-label="Search station">&#128269;</button>
+  <a
+    class="search-icon"
+    routerLink="/search"
+    [queryParams]="{ board: state.boardMode() }"
+    [attr.aria-label]="'navigation.searchStation' | transloco"
+  >
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m16 16 5 5" />
+    </svg>
+  </a>
 </header>
-<a class="destination-search-link" routerLink="/destination">
-  {{ 'destination.open' | transloco }} <span aria-hidden="true">&#8594;</span>
-</a>
 <div
   class="content"
   [class.is-pulling]="isPulling() || state.isRefreshingBoard()"
@@ -57,7 +52,12 @@
     <span class="pull-indicator__label">{{ refreshLabel() }}</span>
   </div>
   @if (!state.selectedStation()) {
-    <div class="msg">{{ 'stationboard.selectStation' | transloco }}</div>
+    <div class="empty-board">
+      <p>{{ 'stationboard.selectStation' | transloco }}</p>
+      <a routerLink="/search" [queryParams]="{ board: state.boardMode() }">{{
+        'navigation.searchStation' | transloco
+      }}</a>
+    </div>
   } @else {
     @if (state.boardRefreshError()) {
       <div class="msg error refresh-error" role="status">{{ state.boardRefreshError() }}</div>
@@ -95,7 +95,11 @@
         </div>
         @for (entry of state.stationboard(); track entry.id) {
           <div class="row">
-            <a class="journey-link" [routerLink]="['/detail', entry.id]">
+            <a
+              class="journey-link"
+              [routerLink]="['/detail', entry.id]"
+              [queryParams]="{ board: state.boardMode() }"
+            >
               <span class="line-cell">
                 <app-line-badge
                   [label]="entry.lineLabel"
@@ -115,7 +119,11 @@
               <a
                 class="platform platform-link"
                 [routerLink]="['/platform', entry.stationId]"
-                [queryParams]="{ platform: entry.platform, station: entry.stationName }"
+                [queryParams]="{
+                  platform: entry.platform,
+                  station: entry.stationName,
+                  board: state.boardMode(),
+                }"
                 [attr.aria-label]="'platformMap.show' | transloco: { platform: entry.platform }"
                 >{{ entry.platformLabel }}</a
               >

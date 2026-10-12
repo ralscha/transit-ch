@@ -32,6 +32,58 @@ tasks:
     cmds:
       - go build -o ../transit-ch-importer{{exeExt}} .
 
+  build-update:
+    desc: Test and build the Go programs and compressed frontend for the Linux server
+    preconditions:
+      - sh: '[ "{{OS}}" = "linux" ]'
+        msg: Run build-update on the Linux server as your normal SSH user.
+      - sh: command -v go >/dev/null && command -v npm >/dev/null
+        msg: Go and Node.js with npm must be installed.
+    cmds:
+      - mkdir -p frontend/tmp/server-build
+      - task: test
+      - go build -trimpath -o frontend/tmp/server-build/transit-ch-backend ./backend
+      - go build -trimpath -o frontend/tmp/server-build/transit-ch-importer ./importer
+      - npm --prefix frontend install --include=dev
+      - npm --prefix frontend run check
+
+  install-update:
+    desc: Build and update the existing Linux installation at /opt/transit-ch
+    vars:
+      REFRESH_PLATFORMS: '{{.REFRESH_PLATFORMS | default "false"}}'
+    preconditions:
+      - sh: '[ "{{OS}}" = "linux" ]'
+        msg: Run install-update on the Linux server as your normal SSH user.
+      - sh: command -v sudo >/dev/null && command -v rsync >/dev/null && command -v systemctl >/dev/null && command -v systemd-analyze >/dev/null
+        msg: sudo, rsync and systemd must be installed.
+      - sh: test -x /opt/transit-ch/transit-ch-backend && test -x /opt/transit-ch/transit-ch-importer && test -s /opt/transit-ch/platforms.bin && test -d /opt/transit-ch/dist/transit-ch/browser
+        msg: An existing installation is required at /opt/transit-ch. See deploy/README.md for initial installation.
+      - sh: test -f /etc/systemd/system/transit-ch.service && test -f /etc/systemd/system/transit-ch-import.service && test -f /etc/systemd/system/transit-ch-import.timer
+        msg: The Transit CH systemd units must already be installed.
+      - sh: '[ "{{.REFRESH_PLATFORMS}}" = "false" ] || [ "{{.REFRESH_PLATFORMS}}" = "true" ]'
+        msg: REFRESH_PLATFORMS must be true or false.
+    cmds:
+      - task: build-update
+      - sudo -v
+      - sudo systemd-analyze verify deploy/systemd/transit-ch.service deploy/systemd/transit-ch-import.service deploy/systemd/transit-ch-import.timer
+      # Stop the timer before its service so no new import starts during installation.
+      - sudo systemctl stop transit-ch-import.timer
+      - sudo systemctl stop transit-ch-import.service
+      - sudo systemctl stop transit-ch.service
+      - sudo install -o root -g root -m 0755 frontend/tmp/server-build/transit-ch-backend frontend/tmp/server-build/transit-ch-importer /opt/transit-ch/
+      - sudo install -o root -g root -m 0644 deploy/systemd/transit-ch.service deploy/systemd/transit-ch-import.service deploy/systemd/transit-ch-import.timer /etc/systemd/system/
+      - sudo systemctl daemon-reload
+      # Publish assets before entry points; keep bundles used by open browser tabs.
+      - sudo rsync -a --chown=root:root --chmod=D755,F644 --exclude='/index.html*' --exclude='/ngsw.json*' frontend/dist/transit-ch/browser/ /opt/transit-ch/dist/transit-ch/browser/
+      - sudo rsync -a --chown=root:root --chmod=D755,F644 --include='/index.html*' --include='/ngsw.json*' --exclude='*' frontend/dist/transit-ch/browser/ /opt/transit-ch/dist/transit-ch/browser/
+      - |
+        if [ "{{.REFRESH_PLATFORMS}}" = "true" ]; then
+          sudo systemctl start transit-ch-import.service
+        fi
+      - sudo systemctl start transit-ch.service
+      - sudo systemctl start transit-ch-import.timer
+      - systemctl --no-pager status transit-ch.service transit-ch-import.timer
+
   format-backend:
     desc: Format backend Go code
     dir: backend
