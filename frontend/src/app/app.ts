@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, DOCUMENT, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
@@ -13,6 +13,7 @@ import { BoardType } from './transport-api.service';
   imports: [RouterOutlet, RouterLink, TranslocoPipe],
   templateUrl: './app.html',
   styleUrls: ['./app.css'],
+  host: { '[style.height.px]': 'viewportHeight()' },
 })
 export class App {
   protected readonly appUpdate = inject(AppUpdateService);
@@ -20,8 +21,11 @@ export class App {
   private readonly router = inject(Router);
   private readonly state = inject(StateService);
   protected readonly activeSection = signal<BoardType | 'destination'>('departure');
+  protected readonly viewportHeight = signal<number | null>(null);
 
   constructor() {
+    this.trackViewportHeight();
+
     const browserLang = navigator.language.split('-')[0];
     if (['en', 'fr', 'it', 'de'].includes(browserLang)) {
       this.translocoService.setActiveLang(browserLang);
@@ -45,5 +49,36 @@ export class App {
             : this.state.boardMode(),
         );
       });
+  }
+
+  private trackViewportHeight(): void {
+    const document = inject(DOCUMENT);
+    const window = document.defaultView;
+    if (!window) return;
+
+    const viewport = window.visualViewport;
+    const syncHeight = () => {
+      // Keep pinch zoom from resizing the layout underneath the user.
+      if (viewport && Math.abs(viewport.scale - 1) > 0.01) return;
+
+      // Mobile startup/browser controls can leave 100dvh taller than the visible area.
+      const height = viewport?.height || window.innerHeight;
+      if (height > 0) this.viewportHeight.set(height);
+    };
+
+    syncHeight();
+    const frame = window.requestAnimationFrame(syncHeight);
+    viewport?.addEventListener('resize', syncHeight);
+    window.addEventListener('resize', syncHeight);
+    window.addEventListener('pageshow', syncHeight);
+    document.addEventListener('visibilitychange', syncHeight);
+
+    inject(DestroyRef).onDestroy(() => {
+      window.cancelAnimationFrame(frame);
+      viewport?.removeEventListener('resize', syncHeight);
+      window.removeEventListener('resize', syncHeight);
+      window.removeEventListener('pageshow', syncHeight);
+      document.removeEventListener('visibilitychange', syncHeight);
+    });
   }
 }
