@@ -60,7 +60,7 @@ func TestSnapshotRejectsCorruptionAndDuplicates(t *testing.T) {
 			t.Fatalf("accepted corruption at %d", offset)
 		}
 	}
-	for n := 0; n < len(data); n++ {
+	for n := range data {
 		if _, err := Decode(data[:n]); err == nil {
 			t.Fatalf("accepted truncation at %d", n)
 		}
@@ -108,10 +108,10 @@ func TestAtomicReplacementAndConcurrentReaders(t *testing.T) {
 	if bytes.Equal(old.Lookup(8503000, "41"), fresh.Lookup(8503000, "41")) {
 		t.Fatal("replacement not visible on reopen")
 	}
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
-			for j := 0; j < 1000; j++ {
+			for range 1000 {
 				if old.Lookup(8503000, "41") == nil {
 					t.Fatal("lost entry")
 				}

@@ -184,7 +184,7 @@ func Decode(data []byte) (*Store, error) {
 	}
 	s := &Store{data: data, slots: slots, count: count, blobStart: uint32(blobStart), date: time.Unix(int64(endian.Uint32(data[24:]))*86400, 0).UTC()}
 	seen := make(map[uint32]bool, count)
-	for i := uint32(0); i < slots; i++ {
+	for i := range slots {
 		slot := data[headerSize+int(i)*slotSize:]
 		offset, length := endian.Uint32(slot[8:]), endian.Uint32(slot[12:])
 		if length == 0 {

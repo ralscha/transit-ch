@@ -109,7 +109,7 @@ func loadPlatforms(source io.Reader, asOf time.Time) ([]platformstore.Entry, imp
 	if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, bufio.ErrBufferFull) {
 		return nil, stats, err
 	}
-	firstLine := strings.SplitN(string(headerLine), "\n", 2)[0]
+	firstLine, _, _ := strings.Cut(string(headerLine), "\n")
 	reader := csv.NewReader(buffer)
 	if strings.Count(firstLine, ";") > strings.Count(firstLine, ",") {
 		reader.Comma = ';'
